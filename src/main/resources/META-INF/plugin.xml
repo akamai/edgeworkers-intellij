@@ -1,0 +1,31 @@
+<idea-plugin>
+    <id>org.example.edgeworkers-intellij</id>
+    <name>Edgeworkers IntelliJ IDEA plugin</name>
+    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">Edgeworkers</vendor>
+
+    <description><![CDATA[
+    IntelliJ IDE plugin for Edgeworker management.<br>
+    <em>most HTML tags may be used</em>
+    ]]></description>
+
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+
+        <!--
+        Add action programmatically in the DynamicActionGroup.
+        -->
+        <group id="EdgeworkersActionGroup" class="EdgeworkersActionGroup"
+               popup="true" text="Edgeworker Management" description="EW AG">
+            <add-to-group group-id="EditorPopupMenu" anchor="first" />
+        </group>
+
+    </actions>
+</idea-plugin>
