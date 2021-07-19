@@ -17,11 +17,13 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class EdgeworkerWrapper {
 
@@ -39,7 +41,7 @@ public class EdgeworkerWrapper {
         toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
         System.out.println(toolWindow);
         if(null == toolWindow){
-            RegisterToolWindowTask registerToolWindowTask = new RegisterToolWindowTask("Edgeworkers", ToolWindowAnchor.BOTTOM, null, false,
+            RegisterToolWindowTask registerToolWindowTask = new RegisterToolWindowTask(TOOL_WINDOW_ID, ToolWindowAnchor.BOTTOM, null, false,
                     true, true, true, null, null, null);
             toolWindow = toolWindowManager.registerToolWindow(registerToolWindowTask);
             toolWindow.setToHideOnEmptyContent(true);
@@ -48,61 +50,55 @@ public class EdgeworkerWrapper {
 
     private ConsoleView createConsoleViewOnNewTabOfToolWindow(String title, String description){
         //create console tab inside tool window
-        ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+        ContentManager contentManager = toolWindow.getContentManager();
+        ContentFactory contentFactory = contentManager.getFactory();
         TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
         ConsoleView console = consoleBuilder.getConsole();
         console.clear();
         console.print("------------"+description+"------------" + "\n", ConsoleViewContentType.LOG_INFO_OUTPUT);
         JComponent consolePanel = createConsolePanel(console);
         Content content = contentFactory.createContent(consolePanel, title, false);
-        toolWindow.getContentManager().addContent(content);
+        contentManager.addContent(content);
+        contentManager.setSelectedContent(content);
         toolWindow.show();
         return console;
     }
 
-    private void runCommandsInConsoleView(ConsoleView console, GeneralCommandLine commandLine) throws ExecutionException {
-        ProcessHandler processHandler = new OSProcessHandler(commandLine);
-        console.attachToProcess(processHandler);
-        processHandler.startNotify();
-        System.out.println(commandLine);
-    }
-
-    public void validateBundle(@NotNull String workDirectory, @NotNull VirtualFile bundlePath) throws ExecutionException {
-        ArrayList<String> commands = new ArrayList<>();
-        commands.add("akamai");
-        commands.add("edgeworkers");
-        commands.add("validate");
-        commands.add(bundlePath.getCanonicalPath()+"/"+EW_BUNDLE_FILENAME);
-        commands.add("--accountkey");
-        commands.add(ACCOUNT_KEY);
-
-        GeneralCommandLine commandLine = new GeneralCommandLine(commands);
-        commandLine.setWorkDirectory(workDirectory);
-        commandLine.setCharset(Charset.forName("UTF-8"));
-
-        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Validate Bundle", "Validate Edgeworker Bundle");
-        runCommandsInConsoleView(consoleView, commandLine);
-    }
-
-    public void createTarball(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
-        ArrayList<String> commands = new ArrayList<>();
-        commands.add("tar");
-        commands.add("-czvf");
-        commands.add(destinationFolder.getCanonicalPath()+"/"+EW_BUNDLE_FILENAME);
-        for(VirtualFile file: ew_files){
-            commands.add(file.getName());
+    private void runCommandsInConsoleView(ConsoleView console, ArrayList<GeneralCommandLine> commandLines) throws ExecutionException {
+        for(GeneralCommandLine cmdLine: commandLines){
+            ProcessHandler processHandler = new OSProcessHandler(cmdLine);
+            console.attachToProcess(processHandler);
+            processHandler.startNotify();
+            System.out.println(cmdLine);
         }
+    }
 
-        GeneralCommandLine commandLine = new GeneralCommandLine(commands);
-        commandLine.setWorkDirectory(workDirectory);
-        commandLine.setCharset(Charset.forName("UTF-8"));
+    public void createAndValidateBundle(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
+        ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
+
+        // command for creating edgeworker bundle
+        ArrayList<String> createBundleCmd = new ArrayList<>();
+        createBundleCmd.addAll(Arrays.asList("tar", "-czvf", destinationFolder.getCanonicalPath()+"/"+EW_BUNDLE_FILENAME));
+        for(VirtualFile file: ew_files){
+            createBundleCmd.add(file.getName());
+        }
+        GeneralCommandLine createBundleCommandLine = new GeneralCommandLine(createBundleCmd);
+        createBundleCommandLine.setWorkDirectory(workDirectory);
+        createBundleCommandLine.setCharset(Charset.forName("UTF-8"));
+        commandLines.add(createBundleCommandLine);
+
+        // command for validating edgeworker bundle
+        ArrayList<String> validateBundleCmd = new ArrayList<>();
+        validateBundleCmd.addAll(Arrays.asList("akamai", "edgeworkers", "validate",destinationFolder.getCanonicalPath()+"/"+EW_BUNDLE_FILENAME, "--accountkey", ACCOUNT_KEY));
+        GeneralCommandLine validateBundleCommandLine = new GeneralCommandLine(validateBundleCmd);
+        validateBundleCommandLine.setWorkDirectory(workDirectory);
+        validateBundleCommandLine.setCharset(Charset.forName("UTF-8"));
+        commandLines.add(validateBundleCommandLine);
 
         try {
-            System.out.println(commandLine);
-            ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Create Bundle", "Create Edgeworker Bundle");
-            runCommandsInConsoleView(consoleView, commandLine);
-            System.out.println("ToolWindow: "+toolWindow.isActive()+' '+toolWindow.isDisposed()+" "+toolWindow.isVisible()+" "+toolWindow.isAvailable());
-
+            System.out.println(createBundleCommandLine + " "+ validateBundleCommandLine);
+            ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Create and Validate Bundle", "Create and Validate Edgeworker Bundle");
+            runCommandsInConsoleView(consoleView, commandLines);
         }catch (Exception e){
             System.out.println("Command Execution failed!"+ e);
             Messages.showErrorDialog("Edgeworker bundle not created!", "Error");

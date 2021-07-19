@@ -28,7 +28,7 @@ public class CreateBundleAction extends AnAction {
     public void update(@NotNull AnActionEvent event) {
         // make the action item visible if the filetype is JSON
         PsiFile psiFile =  event.getData(CommonDataKeys.PSI_FILE);
-        event.getPresentation().setEnabledAndVisible(event.getProject()!=null && psiFile.getFileType() instanceof JsonFileType);
+        event.getPresentation().setEnabledAndVisible(null != event.getProject() && null != psiFile && psiFile.getName().equals("bundle.json"));
     }
 
     @Override
@@ -54,18 +54,10 @@ public class CreateBundleAction extends AnAction {
         EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(project);
 
         try {
-            edgeworkerWrapper.createTarball(currentActionDirectory, filesToBeCompressed, tarballFileLocation);
-        }catch (Exception e){
-            e.printStackTrace();
-            return;
-        }
-
-        try {
-            edgeworkerWrapper.validateBundle(currentActionDirectory, tarballFileLocation);
+            edgeworkerWrapper.createAndValidateBundle(currentActionDirectory, filesToBeCompressed, tarballFileLocation);
         }catch (Exception e){
             e.printStackTrace();
         }
     }
-
 
 }

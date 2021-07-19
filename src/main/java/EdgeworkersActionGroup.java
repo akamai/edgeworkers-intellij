@@ -10,7 +10,7 @@ public class EdgeworkersActionGroup extends ActionGroup {
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        return new AnAction[]{ new UploadEdgeworkerAction("Upload Mock", "Upload Edgeworker to Luna", null),
-                new CreateBundleAction("Create Bundle and Validate", "Create Edgeworker bundle tgz file and validate it", null) };
+        return new AnAction[]{ new UploadEdgeworkerAction("Upload Mock", "Upload Edgeworker", null),
+                new CreateBundleAction("Create and Validate Bundle", "Create and validate EdgeWorker bundle tgz", null) };
     }
 }
