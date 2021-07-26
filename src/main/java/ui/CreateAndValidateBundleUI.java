@@ -10,8 +10,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class CreateBundleUI {
+import java.util.ResourceBundle;
 
+public class CreateAndValidateBundleUI {
+
+    private ResourceBundle resourceBundle;
+
+    public CreateAndValidateBundleUI(){
+        resourceBundle = ResourceBundle.getBundle("ActionBundle");
+    }
     public VirtualFile[] filesChooser(@NotNull AnActionEvent event){
         Project project = event.getProject();
         PsiFile psiFile =  event.getData(CommonDataKeys.PSI_FILE);
@@ -19,7 +26,7 @@ public class CreateBundleUI {
 
         // prompt user to select files for creating Edgeworker code bundle
         FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor();
-        fileChooserDescriptor.setTitle("Select Files for Edgeworker Bundle");
+        fileChooserDescriptor.setTitle(resourceBundle.getString("action.createandvalidatebundle.dialog.filechooser.title"));
         fileChooserDescriptor.setForcedToUseIdeaFileChooser(true);
         fileChooserDescriptor.setRoots(parentPath.getChildren());
 
@@ -32,7 +39,7 @@ public class CreateBundleUI {
 
     public VirtualFile destinationFolderChooser(@NotNull AnActionEvent event){
         FileChooserDescriptor folderChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        folderChooserDescriptor.setTitle("Choose Bundle Destination Folder");
+        folderChooserDescriptor.setTitle(resourceBundle.getString("action.createandvalidatebundle.dialog.destinationfolderchooser.title"));
         folderChooserDescriptor.setForcedToUseIdeaFileChooser(true);
         VirtualFile vf = FileChooser.chooseFile(folderChooserDescriptor, event.getProject(), null);
         return vf;

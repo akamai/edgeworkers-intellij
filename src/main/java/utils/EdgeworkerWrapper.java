@@ -24,24 +24,24 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ResourceBundle;
 
 public class EdgeworkerWrapper {
 
     private ToolWindowManager toolWindowManager;
     private ToolWindow toolWindow;
-    private static final String TOOL_WINDOW_ID = "Edgeworkers";
-    private static final String EW_BUNDLE_FILENAME = "edgeworker_bundle.tgz";
-    private static final String ACCOUNT_KEY = "***REMOVED***";
     private Project project;
+    private ResourceBundle resourceBundle;
 
     public EdgeworkerWrapper(@NotNull Project project){
         //create tool window
         this.project = project;
         toolWindowManager = ToolWindowManager.getInstance(project);
-        toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
+        resourceBundle = ResourceBundle.getBundle("ActionBundle");
+        toolWindow = toolWindowManager.getToolWindow(resourceBundle.getString("toolwindow.id"));
         System.out.println(toolWindow);
         if(null == toolWindow){
-            RegisterToolWindowTask registerToolWindowTask = new RegisterToolWindowTask(TOOL_WINDOW_ID, ToolWindowAnchor.BOTTOM, null, false,
+            RegisterToolWindowTask registerToolWindowTask = new RegisterToolWindowTask(resourceBundle.getString("toolwindow.id"), ToolWindowAnchor.BOTTOM, null, false,
                     true, true, true, null, null, null);
             toolWindow = toolWindowManager.registerToolWindow(registerToolWindowTask);
             toolWindow.setToHideOnEmptyContent(true);
@@ -78,7 +78,7 @@ public class EdgeworkerWrapper {
 
         // command for creating edgeworker bundle
         ArrayList<String> createBundleCmd = new ArrayList<>();
-        createBundleCmd.addAll(Arrays.asList("tar", "-czvf", destinationFolder.getCanonicalPath()+"/"+EW_BUNDLE_FILENAME));
+        createBundleCmd.addAll(Arrays.asList("tar", "-czvf", destinationFolder.getCanonicalPath()+"/"+resourceBundle.getString("action.createandvalidatebundle.filename")));
         for(VirtualFile file: ew_files){
             createBundleCmd.add(file.getName());
         }
@@ -89,7 +89,7 @@ public class EdgeworkerWrapper {
 
         // command for validating edgeworker bundle
         ArrayList<String> validateBundleCmd = new ArrayList<>();
-        validateBundleCmd.addAll(Arrays.asList("akamai", "edgeworkers", "validate",destinationFolder.getCanonicalPath()+"/"+EW_BUNDLE_FILENAME, "--accountkey", ACCOUNT_KEY));
+        validateBundleCmd.addAll(Arrays.asList("akamai", "edgeworkers", "validate",destinationFolder.getCanonicalPath()+"/"+resourceBundle.getString("action.createandvalidatebundle.filename"), "--accountkey", resourceBundle.getString("accountkey")));
         GeneralCommandLine validateBundleCommandLine = new GeneralCommandLine(validateBundleCmd);
         validateBundleCommandLine.setWorkDirectory(workDirectory);
         validateBundleCommandLine.setCharset(Charset.forName("UTF-8"));
@@ -97,7 +97,7 @@ public class EdgeworkerWrapper {
 
         try {
             System.out.println(createBundleCommandLine + " "+ validateBundleCommandLine);
-            ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Create and Validate Bundle", "Create and Validate Edgeworker Bundle");
+            ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow(resourceBundle.getString("action.createandvalidatebundle.title"), resourceBundle.getString("action.createandvalidatebundle.desc"));
             runCommandsInConsoleView(consoleView, commandLines);
         }catch (Exception e){
             System.out.println("Command Execution failed!"+ e);

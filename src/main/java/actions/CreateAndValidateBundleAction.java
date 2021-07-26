@@ -1,6 +1,5 @@
 package actions;
 
-import com.intellij.json.JsonFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,17 +9,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ui.CreateBundleUI;
+import ui.CreateAndValidateBundleUI;
 import utils.EdgeworkerWrapper;
 import javax.swing.*;
 
-public class CreateBundleAction extends AnAction {
+public class CreateAndValidateBundleAction extends AnAction {
 
-    public CreateBundleAction() {
+    public CreateAndValidateBundleAction() {
         super();
     }
 
-    public CreateBundleAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    public CreateAndValidateBundleAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
         super(text, description, icon);
     }
 
@@ -34,14 +33,14 @@ public class CreateBundleAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         Project project = event.getProject();
-        CreateBundleUI createBundleUI = new CreateBundleUI();
-        VirtualFile[] filesToBeCompressed = createBundleUI.filesChooser(event);
+        CreateAndValidateBundleUI createAndValidateBundleUI = new CreateAndValidateBundleUI();
+        VirtualFile[] filesToBeCompressed = createAndValidateBundleUI.filesChooser(event);
         if (null == filesToBeCompressed || filesToBeCompressed.length==0){
             Messages.showInfoMessage("No file selected for code bundle", "Info");
             return;
         }
 
-        VirtualFile tarballFileLocation = createBundleUI.destinationFolderChooser(event);
+        VirtualFile tarballFileLocation = createAndValidateBundleUI.destinationFolderChooser(event);
         if (null == tarballFileLocation){
             Messages.showInfoMessage("No folder selected for code bundle location", "Info");
             return;

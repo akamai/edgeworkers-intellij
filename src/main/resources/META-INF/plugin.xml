@@ -1,10 +1,10 @@
 <idea-plugin>
     <id>org.example.edgeworkers-intellij</id>
-    <name>Edgeworkers IntelliJ IDEA plugin</name>
-    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">Edgeworkers</vendor>
+    <name>Akamai EdgeWorkers IntelliJ IDEA plugin</name>
+    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">EdgeWorkers</vendor>
 
     <description><![CDATA[
-    IntelliJ IDE plugin for Edgeworker management.<br>
+    IntelliJ IDE plugin for Akamai EdgeWorkers management.<br>
     <em>most HTML tags may be used</em>
     ]]></description>
 
