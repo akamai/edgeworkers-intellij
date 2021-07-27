@@ -73,10 +73,8 @@ public class EdgeworkerWrapper {
         }
     }
 
-    public void createAndValidateBundle(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
-        ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
-
-        // command for creating edgeworker bundle
+    public GeneralCommandLine getCreateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
+        // command for creating Edgeworker bundle
         ArrayList<String> createBundleCmd = new ArrayList<>();
         createBundleCmd.addAll(Arrays.asList("tar", "-czvf", destinationFolder.getCanonicalPath()+"/"+resourceBundle.getString("action.createandvalidatebundle.filename")));
         for(VirtualFile file: ew_files){
@@ -85,18 +83,26 @@ public class EdgeworkerWrapper {
         GeneralCommandLine createBundleCommandLine = new GeneralCommandLine(createBundleCmd);
         createBundleCommandLine.setWorkDirectory(workDirectory);
         createBundleCommandLine.setCharset(Charset.forName("UTF-8"));
-        commandLines.add(createBundleCommandLine);
+        return createBundleCommandLine;
+    }
 
-        // command for validating edgeworker bundle
+    public GeneralCommandLine getValidateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
+        // command for validating Edgeworker bundle
         ArrayList<String> validateBundleCmd = new ArrayList<>();
         validateBundleCmd.addAll(Arrays.asList("akamai", "edgeworkers", "validate",destinationFolder.getCanonicalPath()+"/"+resourceBundle.getString("action.createandvalidatebundle.filename"), "--accountkey", resourceBundle.getString("accountkey")));
         GeneralCommandLine validateBundleCommandLine = new GeneralCommandLine(validateBundleCmd);
         validateBundleCommandLine.setWorkDirectory(workDirectory);
         validateBundleCommandLine.setCharset(Charset.forName("UTF-8"));
-        commandLines.add(validateBundleCommandLine);
+        return validateBundleCommandLine;
+    }
+
+    public void createAndValidateBundle(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
+        ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
+
+        commandLines.add(getCreateBundleCommand(workDirectory, ew_files, destinationFolder));
+        commandLines.add(getValidateBundleCommand(workDirectory, ew_files, destinationFolder));
 
         try {
-            System.out.println(createBundleCommandLine + " "+ validateBundleCommandLine);
             ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow(resourceBundle.getString("action.createandvalidatebundle.title"), resourceBundle.getString("action.createandvalidatebundle.desc"));
             runCommandsInConsoleView(consoleView, commandLines);
         }catch (Exception e){
