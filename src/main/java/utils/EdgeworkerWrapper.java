@@ -10,6 +10,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
@@ -110,6 +111,7 @@ public class EdgeworkerWrapper {
             Messages.showErrorDialog("Edgeworker bundle not created!", "Error");
             throw new Exception(e);
         }
+        VfsUtil.markDirtyAndRefresh(false, false, true, destinationFolder);
     }
 
     private JComponent createConsolePanel(ConsoleView view) {
