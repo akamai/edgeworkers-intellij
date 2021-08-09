@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import config.EdgeWorkersConfig;
+import config.SettingsService;
 import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
@@ -90,7 +92,14 @@ public class EdgeworkerWrapper {
     public GeneralCommandLine getValidateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
         // command for validating Edgeworker bundle
         ArrayList<String> validateBundleCmd = new ArrayList<>();
-        validateBundleCmd.addAll(Arrays.asList("akamai", "edgeworkers", "validate",destinationFolder.getCanonicalPath()+"/"+resourceBundle.getString("action.createandvalidatebundle.filename"), "--accountkey", resourceBundle.getString("accountkey")));
+        validateBundleCmd.addAll(Arrays.asList("akamai", "edgeworkers", "validate",destinationFolder.getCanonicalPath()+"/"+resourceBundle.getString("action.createandvalidatebundle.filename")));
+        EdgeWorkersConfig edgeWorkersConfig = SettingsService.getInstance().getState();
+        if(null != edgeWorkersConfig.getEdgercFilePath() && !edgeWorkersConfig.getEdgercFilePath().isEmpty()){
+            validateBundleCmd.addAll(Arrays.asList("--edgerc", edgeWorkersConfig.getEdgercFilePath()));
+        }
+        if(null != edgeWorkersConfig.getAccountKey() && !edgeWorkersConfig.getAccountKey().isEmpty()){
+            validateBundleCmd.addAll(Arrays.asList("--accountkey", edgeWorkersConfig.getAccountKey()));
+        }
         GeneralCommandLine validateBundleCommandLine = new GeneralCommandLine(validateBundleCmd);
         validateBundleCommandLine.setWorkDirectory(workDirectory);
         validateBundleCommandLine.setCharset(Charset.forName("UTF-8"));
