@@ -42,7 +42,6 @@ public class EdgeworkerWrapper {
         toolWindowManager = ToolWindowManager.getInstance(project);
         resourceBundle = ResourceBundle.getBundle("ActionBundle");
         toolWindow = toolWindowManager.getToolWindow(resourceBundle.getString("toolwindow.id"));
-        System.out.println(toolWindow);
         if(null == toolWindow){
             RegisterToolWindowTask registerToolWindowTask = new RegisterToolWindowTask(resourceBundle.getString("toolwindow.id"), ToolWindowAnchor.BOTTOM, null, false,
                     true, true, true, null, null, null);
@@ -89,13 +88,16 @@ public class EdgeworkerWrapper {
         return createBundleCommandLine;
     }
 
-    public GeneralCommandLine getValidateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
+    public GeneralCommandLine getValidateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile destinationFolder) throws Exception{
         // command for validating Edgeworker bundle
         ArrayList<String> validateBundleCmd = new ArrayList<>();
         validateBundleCmd.addAll(Arrays.asList("akamai", "edgeworkers", "validate",destinationFolder.getCanonicalPath()+"/"+resourceBundle.getString("action.createandvalidatebundle.filename")));
         EdgeWorkersConfig edgeWorkersConfig = SettingsService.getInstance().getState();
         if(null != edgeWorkersConfig.getEdgercFilePath() && !edgeWorkersConfig.getEdgercFilePath().isEmpty()){
             validateBundleCmd.addAll(Arrays.asList("--edgerc", edgeWorkersConfig.getEdgercFilePath()));
+        }
+        if(null != edgeWorkersConfig.getEdgercSectionName() && !edgeWorkersConfig.getEdgercSectionName().isEmpty()){
+            validateBundleCmd.addAll(Arrays.asList("--section", edgeWorkersConfig.getEdgercSectionName()));
         }
         if(null != edgeWorkersConfig.getAccountKey() && !edgeWorkersConfig.getAccountKey().isEmpty()){
             validateBundleCmd.addAll(Arrays.asList("--accountkey", edgeWorkersConfig.getAccountKey()));
@@ -110,7 +112,7 @@ public class EdgeworkerWrapper {
         ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
 
         commandLines.add(getCreateBundleCommand(workDirectory, ew_files, destinationFolder));
-        commandLines.add(getValidateBundleCommand(workDirectory, ew_files, destinationFolder));
+        commandLines.add(getValidateBundleCommand(workDirectory, destinationFolder));
 
         try {
             ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow(resourceBundle.getString("action.createandvalidatebundle.title"), resourceBundle.getString("action.createandvalidatebundle.desc"));
