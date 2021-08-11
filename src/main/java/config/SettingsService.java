@@ -1,14 +1,6 @@
 package config;
 
-import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.CredentialAttributesKt;
-import com.intellij.credentialStore.Credentials;
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +26,7 @@ public class SettingsService implements PersistentStateComponent<EdgeWorkersConf
     public void loadState(@NotNull EdgeWorkersConfig state) {
         if(state.getEdgercFilePath().isEmpty()){
             File file = new File(System.getProperty("user.home"));
-            //default path
+            //default edgerc file path
             String path = Paths.get(file.getAbsolutePath(),"/.edgerc").toString();
             state.setEdgercFilePath(path);
         }
