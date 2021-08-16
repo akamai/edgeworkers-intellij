@@ -14,6 +14,9 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
+        <applicationService serviceImplementation="config.SettingsService"></applicationService>
+        <applicationConfigurable id="EdgeWorkersConfiguration" displayName="EdgeWorkers Configuration"
+                                 instance="config.EdgeWorkersConfiguration"/>
     </extensions>
 
     <actions>
