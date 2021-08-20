@@ -97,32 +97,55 @@ public class EdgeworkerWrapper {
         listEdgeWorkersCommandLine.setCharset(Charset.forName("UTF-8"));
         return listEdgeWorkersCommandLine;
     }
+
     public ArrayList<Map<String, String>> getEdgeWorkerVersionsList(String eid) throws Exception{
         File tempFile = FileUtil.createTempFile("tempEdgeWorkerVersions",".json");
         GeneralCommandLine listEdgeWorkerVersionsCmd = getEdgeWorkerVersionListCommand(eid, tempFile.getPath());
-        ProcessHandler processHandler = new OSProcessHandler(listEdgeWorkerVersionsCmd);
+        Integer exitCode = executeCommand(listEdgeWorkerVersionsCmd);
+        if(null == exitCode || !exitCode.equals(0)){
+            return new ArrayList<>();
+        }
+        return parseListEdgeWorkersTempFile("list-versions", tempFile);
+    }
+
+    public Integer executeCommand(GeneralCommandLine commandLine) throws Exception{
+        ProcessHandler processHandler = new OSProcessHandler.Silent(commandLine);
         processHandler.startNotify();
         processHandler.waitFor();
-        System.out.println(processHandler.getExitCode());
-        System.out.println(listEdgeWorkerVersionsCmd);
-        ArrayList<Map<String,String>> result = new ArrayList<>();
-        if(null == processHandler.getExitCode() || !processHandler.getExitCode().equals(0)){
-            return result;
-        }
+        System.out.println(commandLine);
+        return processHandler.getExitCode();
+    }
+
+    public ArrayList<Map<String, String>> parseListEdgeWorkersTempFile(String commandType, File tempFile){
+        ArrayList<Map<String, String>> result = new ArrayList<>();
         try {
             Gson gson = new Gson();
             Reader reader = Files.newBufferedReader(Paths.get(tempFile.getPath()));
             Map<?, ?> map = gson.fromJson(reader, Map.class);
+            tempFile.delete();
             if(map.get("cliStatus").equals(0.0)){
-                for(LinkedTreeMap treeMap: (ArrayList<LinkedTreeMap>) map.get("data")){
-                    Map<String, String> dataMap = new HashMap<>();
-                    if(!treeMap.isEmpty()){
-                        dataMap.put("version", (String)treeMap.get("version"));
-                        result.add(dataMap);
+                ArrayList<LinkedTreeMap> treeMapList = (ArrayList<LinkedTreeMap>) map.get("data");
+                if(commandType=="list-ids"){
+                    for(LinkedTreeMap treeMap: treeMapList){
+                        if(!treeMap.isEmpty()){
+                            Map<String, String> dataMap = new HashMap<>();
+                            Double edgeWorkerId = (Double)treeMap.get("edgeWorkerId");
+                            dataMap.put("edgeWorkerId", String.valueOf(Double.valueOf(edgeWorkerId).intValue()));
+                            dataMap.put("name", (String)treeMap.get("name"));
+                            result.add(dataMap);
+                        }
+                    }
+                }else if(commandType=="list-versions"){
+                    for(LinkedTreeMap treeMap: (ArrayList<LinkedTreeMap>) map.get("data")){
+                        Map<String, String> dataMap = new HashMap<>();
+                        if(!treeMap.isEmpty()){
+                            dataMap.put("version", (String)treeMap.get("version"));
+                            result.add(dataMap);
+                        }
                     }
                 }
-                reader.close();
             }
+            reader.close();
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -140,36 +163,12 @@ public class EdgeworkerWrapper {
 
     public ArrayList<Map<String, String>> getEdgeWorkersIdsList() throws Exception{
         File tempFile = FileUtil.createTempFile("tempEdgeWorkersIds",".json");
-        GeneralCommandLine listEdgeWorkersCommandLine = getEdgeWorkersIdsListCommand(tempFile.getPath());
-        ProcessHandler processHandler = new OSProcessHandler.Silent(listEdgeWorkersCommandLine);
-        ProcessTerminatedListener.attach(processHandler);
-        processHandler.startNotify();
-        processHandler.waitFor();
-        System.out.println(listEdgeWorkersCommandLine);
-        ArrayList<Map<String, String>> result = new ArrayList<>();
-        if(null == processHandler.getExitCode() || !processHandler.getExitCode().equals(0)){
-            return result;
+        GeneralCommandLine commandLine = getEdgeWorkersIdsListCommand(tempFile.getPath());
+        Integer exitCode = executeCommand(commandLine);
+        if(null == exitCode || !exitCode.equals(0)){
+            return new ArrayList<>();
         }
-        try {
-            Gson gson = new Gson();
-            Reader reader = Files.newBufferedReader(Paths.get(tempFile.getPath()));
-            Map<?, ?> map = gson.fromJson(reader, Map.class);
-            if(map.get("cliStatus").equals(0.0)){
-                for(LinkedTreeMap treeMap: (ArrayList<LinkedTreeMap>) map.get("data")){
-                    if(!treeMap.isEmpty()){
-                        Map<String, String> dataMap = new HashMap<>();
-                        Double edgeWorkerId = (Double)treeMap.get("edgeWorkerId");
-                        dataMap.put("edgeWorkerId", String.valueOf(Double.valueOf(edgeWorkerId).intValue()));
-                        dataMap.put("name", (String)treeMap.get("name"));
-                        result.add(dataMap);
-                    }
-                }
-                reader.close();
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return result;
+        return parseListEdgeWorkersTempFile("list-ids", tempFile);
     }
 
     public GeneralCommandLine getCreateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
