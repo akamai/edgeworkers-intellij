@@ -1,12 +1,6 @@
-package actions;
-
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -16,13 +10,12 @@ import config.EdgeWorkersConfig;
 import config.SettingsService;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import utils.EdgeworkerWrapper;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class CreateAndValidateBundleActionTest extends BasePlatformTestCase{
+public class CreateAndValidateBundleTest extends BasePlatformTestCase{
 
     protected CodeInsightTestFixture myFixture;
     EdgeWorkersConfig config;
