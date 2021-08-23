@@ -1,0 +1,18 @@
+{
+  "cliStatus": 0,
+  "msg": "The following EdgeWorker Ids are currently registered for account: test, group: any, ewId: any",
+  "data": [
+    {
+      "edgeWorkerId": 8,
+      "name": "ew_test",
+      "groupId": 117225,
+      "resourceTierId": 200
+    },
+    {
+      "edgeWorkerId": 9,
+      "name": "EdgeWorker for MoFroYo Cart Count",
+      "groupId": 135713,
+      "resourceTierId": 200
+    }
+  ]
+}
