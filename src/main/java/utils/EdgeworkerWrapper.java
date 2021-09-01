@@ -8,7 +8,6 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
@@ -122,7 +121,6 @@ public class EdgeworkerWrapper {
             Gson gson = new Gson();
             Reader reader = Files.newBufferedReader(Paths.get(tempFile.getPath()));
             Map<?, ?> map = gson.fromJson(reader, Map.class);
-            tempFile.delete();
             if(map.get("cliStatus").equals(0.0)){
                 ArrayList<LinkedTreeMap> treeMapList = (ArrayList<LinkedTreeMap>) map.get("data");
                 if(commandType=="list-ids"){
@@ -143,9 +141,11 @@ public class EdgeworkerWrapper {
                             result.add(dataMap);
                         }
                     }
+                    System.out.println(result);
                 }
             }
             reader.close();
+            tempFile.delete();
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -230,5 +230,36 @@ public class EdgeworkerWrapper {
         panel.setLayout(new BorderLayout());
         panel.add(view.getComponent(), BorderLayout.CENTER);
         return panel;
+    }
+
+    public GeneralCommandLine getEdgeWorkerDownloadCommand(String eid, String versionId, String downloadPath) throws Exception{
+        ArrayList<String> listEdgeWorkerVersionsCmd = new ArrayList<>();
+        listEdgeWorkerVersionsCmd.addAll(Arrays.asList("akamai", "edgeworkers", "download-version", eid, versionId, "--downloadPath", downloadPath));
+        listEdgeWorkerVersionsCmd = addOptionsParams(listEdgeWorkerVersionsCmd);
+        GeneralCommandLine listEdgeWorkersCommandLine = new GeneralCommandLine(listEdgeWorkerVersionsCmd);
+        listEdgeWorkersCommandLine.setCharset(Charset.forName("UTF-8"));
+        return listEdgeWorkersCommandLine;
+    }
+    public Integer downloadEdgeWorker(String eid, String versionId, String downloadPath) throws Exception{
+        GeneralCommandLine commandLine = getEdgeWorkerDownloadCommand(eid, versionId, downloadPath);
+        Integer exitCode = executeCommand(commandLine);
+        System.out.println(exitCode);
+        return exitCode;
+    }
+    public GeneralCommandLine getExtractTgzFileCommand(String tgzFilePath, String extractDirectory) throws Exception{
+        ArrayList<String> listEdgeWorkerVersionsCmd = new ArrayList<>();
+        listEdgeWorkerVersionsCmd.addAll(Arrays.asList("tar", "-xvzf", tgzFilePath, "-C", extractDirectory));
+        GeneralCommandLine commandLine = new GeneralCommandLine(listEdgeWorkerVersionsCmd);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public Integer extractTgzFile(String tgzFilePath, String extractDirectory) throws Exception{
+        GeneralCommandLine commandLine = getExtractTgzFileCommand(tgzFilePath, extractDirectory);
+        Integer exitCode = executeCommand(commandLine);
+        if(null == exitCode || !exitCode.equals(0)){
+            System.out.println(" extractTgzFile exitCode");
+        }
+        return exitCode;
     }
 }
