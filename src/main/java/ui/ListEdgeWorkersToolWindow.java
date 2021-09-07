@@ -1,5 +1,6 @@
 package ui;
 
+import actions.DownloadEdgeWorkerAction;
 import actions.ListEdgeWorkersAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -13,22 +14,30 @@ import java.util.ResourceBundle;
 public class ListEdgeWorkersToolWindow {
 
     private ResourceBundle resourceBundle;
+    private SimpleToolWindowPanel panel;
 
     public ListEdgeWorkersToolWindow(){
         resourceBundle = ResourceBundle.getBundle("ActionBundle");
+        panel = new SimpleToolWindowPanel(true, false);
+        ActionManager actionManager = ActionManager.getInstance();
+        if(null != actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id"))){
+            actionManager.unregisterAction(resourceBundle.getString("action.listEdgeWorkers.id"));
+        }
+        if(null != actionManager.getAction(resourceBundle.getString("action.downloadEdgeWorker.id"))){
+            actionManager.unregisterAction(resourceBundle.getString("action.downloadEdgeWorker.id"));
+        }
+        actionManager.registerAction(resourceBundle.getString("action.downloadEdgeWorker.id"), new DownloadEdgeWorkerAction(resourceBundle.getString("action.downloadEdgeWorker.title"), resourceBundle.getString("action.downloadEdgeWorker.desc"), null));
+        actionManager.registerAction(resourceBundle.getString("action.listEdgeWorkers.id"), new ListEdgeWorkersAction(panel));
     }
 
-
     public JPanel getContent() throws Exception{
-        SimpleToolWindowPanel panel = new SimpleToolWindowPanel(true, false);
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(resourceBundle.getString("listEdgeWorkersToolWindow.panel.title"));
-        Tree tree = new Tree(rootNode);
         JScrollPane scrollPane = new JBScrollPane();
+        panel.removeAll();
         panel.add(scrollPane, BorderLayout.CENTER);
-        scrollPane.setViewportView(tree);
+        scrollPane.setViewportView(new Tree(rootNode));
         DefaultActionGroup actionGroup = new DefaultActionGroup();
         ActionManager actionManager = ActionManager.getInstance();
-        actionManager.registerAction(resourceBundle.getString("action.listEdgeWorkers.id"), new ListEdgeWorkersAction(panel));
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id")), Constraints.FIRST);
         ActionToolbar actionToolbar = actionManager.createActionToolbar("", actionGroup, true);
         actionToolbar.setTargetComponent(panel);
