@@ -7,21 +7,21 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.content.*;
 import config.EdgeWorkersConfig;
 import config.SettingsService;
 import org.jetbrains.annotations.NotNull;
@@ -34,12 +34,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class EdgeworkerWrapper {
+public class EdgeworkerWrapper implements Disposable {
 
     private ToolWindowManager toolWindowManager;
     private ToolWindow toolWindow;
     private Project project;
     private ResourceBundle resourceBundle;
+    private ConsoleView console;
 
     public EdgeworkerWrapper(@NotNull Project project){
         setUpToolWindowForConsoleViews(project);
@@ -67,11 +68,12 @@ public class EdgeworkerWrapper {
         ContentManager contentManager = toolWindow.getContentManager();
         ContentFactory contentFactory = contentManager.getFactory();
         TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-        ConsoleView console = consoleBuilder.getConsole();
+        console = consoleBuilder.getConsole();
         console.clear();
-        console.print("------------"+description+"------------" + "\n", ConsoleViewContentType.LOG_INFO_OUTPUT);
+        console.print("----------------"+description+"----------------" + "\n", ConsoleViewContentType.LOG_INFO_OUTPUT);
         JComponent consolePanel = createConsolePanel(console);
         Content content = contentFactory.createContent(consolePanel, title, false);
+        content.setDisposer(this::dispose);
         contentManager.addContent(content);
         contentManager.setSelectedContent(content);
         toolWindow.show();
@@ -79,12 +81,30 @@ public class EdgeworkerWrapper {
     }
 
     private void runCommandsInConsoleView(ConsoleView console, ArrayList<GeneralCommandLine> commandLines) throws ExecutionException {
+
         for(GeneralCommandLine cmdLine: commandLines){
             ProcessHandler processHandler = new OSProcessHandler(cmdLine);
-            console.attachToProcess(processHandler);
+            processHandler.addProcessListener(new ProcessListener() {
+
+                @Override
+                public void startNotified(@NotNull ProcessEvent event) {
+
+                }
+
+                @Override
+                public void processTerminated(@NotNull ProcessEvent event) {
+
+                }
+
+                @Override
+                public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                    if(!outputType.toString().equals("stderr")){
+                        console.print(event.getText(), ConsoleViewContentType.NORMAL_OUTPUT);
+                    }
+                }
+            });
             processHandler.startNotify();
             processHandler.waitFor();
-            System.out.println(cmdLine);
         }
     }
 
@@ -210,18 +230,21 @@ public class EdgeworkerWrapper {
 
     public void createAndValidateBundle(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
         ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
-
         commandLines.add(getCreateBundleCommand(workDirectory, ew_files, destinationFolder));
         commandLines.add(getValidateBundleCommand(workDirectory, destinationFolder));
-
-        try {
-            ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow(resourceBundle.getString("action.createandvalidatebundle.title"), resourceBundle.getString("action.createandvalidatebundle.desc"));
-            runCommandsInConsoleView(consoleView, commandLines);
-        }catch (Exception e){
-            System.out.println("Command Execution failed!"+ e);
-            Messages.showErrorDialog("Edgeworker bundle not created!", "Error");
-            throw new Exception(e);
-        }
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow(resourceBundle.getString("action.createandvalidatebundle.title"), resourceBundle.getString("action.createandvalidatebundle.desc"));
+        ProgressManager.getInstance()
+                .runProcessWithProgressSynchronously(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            runCommandsInConsoleView(consoleView, commandLines);
+                        } catch (ExecutionException e) {
+                            System.out.println("Command Execution failed!"+ e);
+                            Messages.showErrorDialog("Edgeworker bundle not created!", "Error");
+                        }
+                    }
+                },"Creating and Validating...", false, project);
         VfsUtil.markDirtyAndRefresh(false, false, true, destinationFolder);
     }
 
@@ -232,20 +255,48 @@ public class EdgeworkerWrapper {
         return panel;
     }
 
-    public GeneralCommandLine getEdgeWorkerDownloadCommand(String eid, String versionId, String downloadPath) throws Exception{
-        ArrayList<String> listEdgeWorkerVersionsCmd = new ArrayList<>();
-        listEdgeWorkerVersionsCmd.addAll(Arrays.asList("akamai", "edgeworkers", "download-version", eid, versionId, "--downloadPath", downloadPath));
-        listEdgeWorkerVersionsCmd = addOptionsParams(listEdgeWorkerVersionsCmd);
-        GeneralCommandLine listEdgeWorkersCommandLine = new GeneralCommandLine(listEdgeWorkerVersionsCmd);
-        listEdgeWorkersCommandLine.setCharset(Charset.forName("UTF-8"));
-        return listEdgeWorkersCommandLine;
+    public GeneralCommandLine getUploadEdgeWorkerCommand(String eid, String bundlePath) throws Exception{
+        ArrayList<String> uploadEdgeWorkerCmd = new ArrayList<>();
+        uploadEdgeWorkerCmd.addAll(Arrays.asList("akamai", "edgeworkers", "upload", eid, "--bundle", bundlePath));
+        uploadEdgeWorkerCmd = addOptionsParams(uploadEdgeWorkerCmd);
+        GeneralCommandLine uploadEdgeWorkerCmdLine = new GeneralCommandLine(uploadEdgeWorkerCmd);
+        uploadEdgeWorkerCmdLine.setCharset(Charset.forName("UTF-8"));
+        return uploadEdgeWorkerCmdLine;
     }
+
+    public void uploadEdgeWorker(String eid, String bundlePath) throws Exception{
+        ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
+        commandLines.add(getUploadEdgeWorkerCommand(eid, bundlePath));
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Upload EdgeWorker", "Upload EW");
+        ProgressManager.getInstance()
+                .runProcessWithProgressSynchronously(new Runnable() {
+                                                      @Override
+                                                      public void run() {
+                                                          try {
+                                                              runCommandsInConsoleView(consoleView, commandLines);
+                                                          } catch (ExecutionException e) {
+                                                              e.printStackTrace();
+                                                              Messages.showErrorDialog("EdgeWorker was not uploaded!", "Error");
+                                                          }
+                                                      }
+                                                  },"Uploading...", false, project);
+    }
+
+    public GeneralCommandLine getEdgeWorkerDownloadCommand(String eid, String versionId, String downloadPath) throws Exception{
+        ArrayList<String> downloadEdgeWorkerCmd = new ArrayList<>();
+        downloadEdgeWorkerCmd.addAll(Arrays.asList("akamai", "edgeworkers", "download-version", eid, versionId, "--downloadPath", downloadPath));
+        downloadEdgeWorkerCmd = addOptionsParams(downloadEdgeWorkerCmd);
+        GeneralCommandLine downloadEdgeWorkerCmdLine = new GeneralCommandLine(downloadEdgeWorkerCmd);
+        downloadEdgeWorkerCmdLine.setCharset(Charset.forName("UTF-8"));
+        return downloadEdgeWorkerCmdLine;
+    }
+
     public Integer downloadEdgeWorker(String eid, String versionId, String downloadPath) throws Exception{
         GeneralCommandLine commandLine = getEdgeWorkerDownloadCommand(eid, versionId, downloadPath);
         Integer exitCode = executeCommand(commandLine);
-        System.out.println(exitCode);
         return exitCode;
     }
+
     public GeneralCommandLine getExtractTgzFileCommand(String tgzFilePath, String extractDirectory) throws Exception{
         ArrayList<String> listEdgeWorkerVersionsCmd = new ArrayList<>();
         listEdgeWorkerVersionsCmd.addAll(Arrays.asList("tar", "-xvzf", tgzFilePath, "-C", extractDirectory));
@@ -261,5 +312,11 @@ public class EdgeworkerWrapper {
             System.out.println(" extractTgzFile exitCode");
         }
         return exitCode;
+    }
+
+    @Override
+    public void dispose() {
+        //gets executed when EdgeWorker's console view tabs are closed or intellij main window is closed
+        console.dispose();
     }
 }
