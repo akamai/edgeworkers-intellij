@@ -98,9 +98,10 @@ public class UploadEdgeWorkerAction extends AnAction {
         EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(event.getProject());
         try {
             edgeworkerWrapper.uploadEdgeWorker(eid.toString(), bundlePath);
-            if(event.isFromActionToolbar()){
-                //refresh EdgeWorkers list
-                ListEdgeWorkersAction listEdgeWorkersAction = (ListEdgeWorkersAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.listEdgeWorkers.id"));
+            //refresh EdgeWorkers list
+            ActionManager actionManager = ActionManager.getInstance();
+            if(null!=actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id"))){
+                ListEdgeWorkersAction listEdgeWorkersAction = (ListEdgeWorkersAction) actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id"));
                 //get data context for listEdgeWorkersAction's refresh button on toolbar
                 DataContext dataContext = DataManager.getInstance().getDataContext(listEdgeWorkersAction.getPanel().getToolbar().getComponent(0));
                 listEdgeWorkersAction.actionPerformed(new AnActionEvent(null,
