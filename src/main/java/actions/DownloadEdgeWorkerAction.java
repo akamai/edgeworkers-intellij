@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +40,15 @@ public class DownloadEdgeWorkerAction extends AnAction {
         TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
         textFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(fileChooserDescriptor));
         VirtualFile[] vfs = FileChooser.chooseFiles(fileChooserDescriptor, event.getProject(), null);
+        if(null==vfs || vfs.length==0){
+            return;
+        }
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
                     @Override
                     public void run() {
                         try {
                             Integer exitCode = edgeworkerWrapper.downloadEdgeWorker(edgeWorkerId, edgeWorkerVersion, vfs[0].getCanonicalPath());
+                            VfsUtil.markDirtyAndRefresh(false, false, true, vfs[0]);
                             if(null == exitCode || !exitCode.equals(0)){
                                 System.out.println("Downloading EdgeWorker failed!");
                             }

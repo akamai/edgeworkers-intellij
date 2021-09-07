@@ -25,7 +25,7 @@ public class CreateAndValidateBundleAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent event) {
-        // make the action item visible if the filetype is JSON
+        // make the action item visible if the file is bundle.json
         PsiFile psiFile =  event.getData(CommonDataKeys.PSI_FILE);
         event.getPresentation().setEnabledAndVisible(null != event.getProject() && null != psiFile && psiFile.getName().equals("bundle.json"));
     }
