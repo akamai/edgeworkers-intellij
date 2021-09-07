@@ -11,13 +11,11 @@ public class ListEdgeWorkersToolWindowFactory implements ToolWindowFactory {
 
     @Override
     public boolean isApplicable(@NotNull Project project) {
-        System.out.println("isApplicable");
         return ToolWindowFactory.super.isApplicable(project);
     }
 
     @Override
     public boolean shouldBeAvailable(@NotNull Project project) {
-        System.out.println("shouldBeAvailable");
         return ToolWindowFactory.super.shouldBeAvailable(project);
     }
 
