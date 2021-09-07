@@ -2,6 +2,8 @@ package ui;
 
 import actions.DownloadEdgeWorkerAction;
 import actions.ListEdgeWorkersAction;
+import actions.UploadEdgeWorkerAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.components.JBScrollPane;
@@ -26,8 +28,12 @@ public class ListEdgeWorkersToolWindow {
         if(null != actionManager.getAction(resourceBundle.getString("action.downloadEdgeWorker.id"))){
             actionManager.unregisterAction(resourceBundle.getString("action.downloadEdgeWorker.id"));
         }
-        actionManager.registerAction(resourceBundle.getString("action.downloadEdgeWorker.id"), new DownloadEdgeWorkerAction(resourceBundle.getString("action.downloadEdgeWorker.title"), resourceBundle.getString("action.downloadEdgeWorker.desc"), null));
+        if(null != actionManager.getAction(resourceBundle.getString("action.uploadEdgeWorker.id"))){
+            actionManager.unregisterAction(resourceBundle.getString("action.uploadEdgeWorker.id"));
+        }
+        actionManager.registerAction(resourceBundle.getString("action.downloadEdgeWorker.id"), new DownloadEdgeWorkerAction(resourceBundle.getString("action.downloadEdgeWorker.title"), resourceBundle.getString("action.downloadEdgeWorker.desc"), AllIcons.Actions.Download));
         actionManager.registerAction(resourceBundle.getString("action.listEdgeWorkers.id"), new ListEdgeWorkersAction(panel));
+        actionManager.registerAction(resourceBundle.getString("action.uploadEdgeWorker.id"), new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), AllIcons.Actions.Upload));
     }
 
     public JPanel getContent() throws Exception{
@@ -39,6 +45,7 @@ public class ListEdgeWorkersToolWindow {
         DefaultActionGroup actionGroup = new DefaultActionGroup();
         ActionManager actionManager = ActionManager.getInstance();
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id")), Constraints.FIRST);
+        actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.uploadEdgeWorker.id")), Constraints.LAST);
         ActionToolbar actionToolbar = actionManager.createActionToolbar("", actionGroup, true);
         actionToolbar.setTargetComponent(panel);
         panel.setToolbar(actionToolbar.getComponent());
