@@ -44,6 +44,10 @@ public class UploadEdgeWorkerAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
+        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(event.getProject());
+        if(edgeworkerWrapper.checkIfAkamaiCliInstalled()==false){
+            return;
+        }
         String bundlePath;
         if(event.isFromActionToolbar()){
             // prompt user to select path to EdgeWorker tgz file
@@ -95,7 +99,6 @@ public class UploadEdgeWorkerAction extends AnAction {
             return;
         }
 
-        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(event.getProject());
         try {
             edgeworkerWrapper.uploadEdgeWorker(eid.toString(), bundlePath);
             //refresh EdgeWorkers list

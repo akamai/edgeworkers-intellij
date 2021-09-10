@@ -77,8 +77,12 @@ public class ListEdgeWorkersAction extends AnAction {
             }
         });
     }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e){
+        if(new EdgeworkerWrapper().checkIfAkamaiCliInstalled()==false){
+            return;
+        }
         loading=true;
         update(e);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
