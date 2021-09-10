@@ -12,6 +12,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.ui.content.*;
 import config.EdgeWorkersConfig;
 import config.SettingsService;
 import org.jetbrains.annotations.NotNull;
+import ui.CheckAkamaiCLIDialog;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -125,6 +127,12 @@ public class EdgeworkerWrapper implements Disposable {
             return new ArrayList<>();
         }
         return parseListEdgeWorkersTempFile("list-versions", tempFile);
+    }
+
+    public String executeCommandAndGetOutput(GeneralCommandLine commandLine) throws Exception{
+        String output = ExecUtil.execAndGetOutput(commandLine, "");
+        System.out.println(commandLine);
+        return output;
     }
 
     public Integer executeCommand(GeneralCommandLine commandLine) throws Exception{
@@ -312,6 +320,66 @@ public class EdgeworkerWrapper implements Disposable {
             System.out.println(" extractTgzFile exitCode");
         }
         return exitCode;
+    }
+
+    public GeneralCommandLine getCLICommandLineByParams(String ...params){
+        ArrayList<String> command = new ArrayList<>();
+        command.addAll(Arrays.asList(params));
+        GeneralCommandLine commandLine = new GeneralCommandLine(command);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public boolean checkIfAkamaiCliInstalled(){
+        final boolean[] akamaiCliInstalled = {false};
+        final Integer[] exitCode = {1};
+        try {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        //check if akamai cli is installed
+                        exitCode[0] = executeCommand(getCLICommandLineByParams("akamai", "--version"));
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
+                }
+            }, "Loading...", false, project);
+            if (exitCode[0] == 1) {
+                //when akamai cli is not installed
+                CheckAkamaiCLIDialog checkAkamaiCLIDialog = new CheckAkamaiCLIDialog();
+                checkAkamaiCLIDialog.show();
+            } else {
+                ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            akamaiCliInstalled[0] = true;
+                            String output = executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "help"));
+                            //install Akamai EdgeWorker CLI if not already installed
+                            if (!output.contains("edgeworkers")) {
+                                if (executeCommand(getCLICommandLineByParams("akamai", "install", "edgeworkers")) == 1) {
+                                    akamaiCliInstalled[0] = false;
+                                    System.out.println("Error came while installing akamai edgeworkers cli.");
+                                }
+                            }
+                            //install Akamai sandbox CLI if not already installed
+                            if (!output.contains("sandbox")) {
+                                if (executeCommand(getCLICommandLineByParams("akamai", "install", "sandbox")) == 1) {
+                                    akamaiCliInstalled[0] = false;
+                                    System.out.println("Error came while installing akamai sandbox cli.");
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, "Loading...", false, project);
+            }
+        }catch (Exception exception){
+            exception.printStackTrace();
+        }
+        return akamaiCliInstalled[0];
     }
 
     @Override
