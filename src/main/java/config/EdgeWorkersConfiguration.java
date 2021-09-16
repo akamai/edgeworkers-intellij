@@ -53,9 +53,9 @@ public class EdgeWorkersConfiguration implements Configurable, Configurable.NoSc
     @Override
     public boolean isModified() {
         EdgeWorkersConfig edgeWorkersConfig = SettingsService.getInstance().getState();
-        if(edgeWorkersConfig.getEdgercFilePath().equals(edgercFilePath.getText()) &&
-           edgeWorkersConfig.getEdgercSectionName().equals(edgercSection.getText()) &&
-           edgeWorkersConfig.getAccountKey().equals(accountKey.getText())){
+        if(edgercFilePath.getText().equals(edgeWorkersConfig.getEdgercFilePath()) &&
+                edgercSection.getText().equals(edgeWorkersConfig.getEdgercSectionName()) &&
+                accountKey.getText().equals(edgeWorkersConfig.getAccountKey())){
             return false;
         }
         return true;
