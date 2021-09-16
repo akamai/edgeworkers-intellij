@@ -164,6 +164,7 @@ public class ListEdgeWorkersAction extends AnAction {
             @Override
             public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
                 if(event.getPath().getPathCount()==3){
+                    //EdgeWorker version node collapsed
                     String eid = event.getPath().getPath()[1].toString().split("-")[0].strip().trim();
                     String version = event.getPath().getPath()[2].toString().trim();
                     File directory = new File(FileUtil.getTempDirectory()+"/tempEdgeWorkersDownload_"+eid+"_"+version);
@@ -187,6 +188,7 @@ public class ListEdgeWorkersAction extends AnAction {
             public void valueChanged(TreeSelectionEvent e) {
                 if(null!= e.getNewLeadSelectionPath()){
                     if(e.getNewLeadSelectionPath().getPathCount()==3){
+                        //EdgeWorker version node selected
                         String eid = e.getNewLeadSelectionPath().getPath()[1].toString().split("-")[0].strip();
                         String version = e.getNewLeadSelectionPath().getPath()[2].toString();
                         DefaultMutableTreeNode versionNode = (DefaultMutableTreeNode) e.getNewLeadSelectionPath().getPath()[2];
@@ -260,5 +262,9 @@ public class ListEdgeWorkersAction extends AnAction {
                 }
             }
         });
+    }
+
+    public SimpleToolWindowPanel getPanel() {
+        return panel;
     }
 }
