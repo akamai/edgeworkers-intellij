@@ -1,12 +1,10 @@
 import actions.CreateAndValidateBundleAction;
-import actions.ListEdgeWorkersAction;
-import actions.UploadEdgeworkerAction;
+import actions.UploadEdgeWorkerAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.ResourceBundle;
 
 public class EdgeworkersActionGroup extends ActionGroup {
@@ -16,7 +14,7 @@ public class EdgeworkersActionGroup extends ActionGroup {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("ActionBundle");
         return new AnAction[]{
                 new CreateAndValidateBundleAction(resourceBundle.getString("action.createandvalidatebundle.title"), resourceBundle.getString("action.createandvalidatebundle.desc"), null),
-                new UploadEdgeworkerAction(resourceBundle.getString("action.uploadedgeworker.title"), resourceBundle.getString("action.uploadedgeworker.desc"), null)
+                new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), null)
         };
     }
 }
