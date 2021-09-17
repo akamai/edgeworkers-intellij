@@ -1,4 +1,5 @@
 import actions.CreateAndValidateBundleAction;
+import actions.SandboxUpdateEdgeWorkerAction;
 import actions.UploadEdgeWorkerAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -14,7 +15,8 @@ public class EdgeworkersActionGroup extends ActionGroup {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("ActionBundle");
         return new AnAction[]{
                 new CreateAndValidateBundleAction(resourceBundle.getString("action.createandvalidatebundle.title"), resourceBundle.getString("action.createandvalidatebundle.desc"), null),
-                new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), null)
+                new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), null),
+                new SandboxUpdateEdgeWorkerAction(resourceBundle.getString("action.testEdgeWorkerInSandbox.title"), resourceBundle.getString("action.testEdgeWorkerInSandbox.desc"), null)
         };
     }
 }
