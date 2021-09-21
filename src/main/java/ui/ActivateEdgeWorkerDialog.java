@@ -28,12 +28,24 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
         return null;
     }
 
+    public void setEdgeWorkersIDInDropdown(String eid) {
+        if(null!=this.edgeWorkersListDropdown) {
+            this.edgeWorkersListDropdown.setItem(eid);
+        }
+    }
+
     public String getSelectedEdgeWorkerVersion() throws Exception{
         if(null!=edgeWorkerVersionsDropdown){
             String edgeWorkerVersion = (String) edgeWorkerVersionsDropdown.getItem();
             return edgeWorkerVersion;
         }
         return null;
+    }
+
+    public void setEdgeWorkerVersionInDropdown(String version){
+        if(null!=this.edgeWorkerVersionsDropdown) {
+            this.edgeWorkerVersionsDropdown.setItem(version);
+        }
     }
 
     public String getSelectedNetwork() throws Exception{

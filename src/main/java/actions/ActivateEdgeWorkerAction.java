@@ -13,19 +13,34 @@ import java.util.ResourceBundle;
 public class ActivateEdgeWorkerAction extends AnAction {
 
     private ResourceBundle resourceBundle;
+    private ActivateEdgeWorkerDialog dialog;
 
     public ActivateEdgeWorkerAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
         super(text, description, icon);
+        dialog = new ActivateEdgeWorkerDialog();
         resourceBundle = ResourceBundle.getBundle("ActionBundle");
+    }
+
+    public ActivateEdgeWorkerDialog getDialog() {
+        return dialog;
+    }
+
+    public void setDialog(ActivateEdgeWorkerDialog dialog) {
+        this.dialog = dialog;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+        if(new EdgeworkerWrapper().checkIfAkamaiCliInstalled()==false){
+            return;
+        }
         String eid = null;
         String version = null;
         String network = null;
         try {
-            ActivateEdgeWorkerDialog dialog = new ActivateEdgeWorkerDialog();
+            if(dialog.isDisposed()){
+                dialog = new ActivateEdgeWorkerDialog();
+            }
             if(dialog.showAndGet()){
                 //ok button pressed
                 eid = dialog.getSelectedEdgeWorkerID();

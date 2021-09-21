@@ -35,10 +35,11 @@ public class ListEdgeWorkersToolWindow {
         if(null != actionManager.getAction(resourceBundle.getString("action.activateEdgeWorker.id"))){
             actionManager.unregisterAction(resourceBundle.getString("action.activateEdgeWorker.id"));
         }
+        //register download and activate EdgeWorker actions before registering listEdgeWorker action
         actionManager.registerAction(resourceBundle.getString("action.downloadEdgeWorker.id"), new DownloadEdgeWorkerAction(resourceBundle.getString("action.downloadEdgeWorker.title"), resourceBundle.getString("action.downloadEdgeWorker.desc"), AllIcons.Actions.Download));
+        actionManager.registerAction(resourceBundle.getString("action.activateEdgeWorker.id"), new ActivateEdgeWorkerAction(resourceBundle.getString("action.activateEdgeWorker.title"), resourceBundle.getString("action.activateEdgeWorker.desc"), AllIcons.Actions.Install));
         actionManager.registerAction(resourceBundle.getString("action.listEdgeWorkers.id"), new ListEdgeWorkersAction(panel));
         actionManager.registerAction(resourceBundle.getString("action.uploadEdgeWorker.id"), new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), AllIcons.Actions.Upload));
-        actionManager.registerAction(resourceBundle.getString("action.activateEdgeWorker.id"), new ActivateEdgeWorkerAction(resourceBundle.getString("action.activateEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), AllIcons.Actions.Install));
     }
 
     public JPanel getContent() throws Exception{
