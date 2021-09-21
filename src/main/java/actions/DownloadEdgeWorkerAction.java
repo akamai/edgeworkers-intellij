@@ -32,6 +32,9 @@ public class DownloadEdgeWorkerAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(event.getProject());
+        if(edgeworkerWrapper.checkIfAkamaiCliInstalled()==false){
+            return;
+        }
         FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         fileChooserDescriptor.setTitle(resourceBundle.getString("action.downloadEdgeWorker.folderChooser.title"));
         fileChooserDescriptor.setDescription(resourceBundle.getString("action.downloadEdgeWorker.folderChooser.desc"));
