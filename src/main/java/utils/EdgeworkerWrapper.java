@@ -175,6 +175,27 @@ public class EdgeworkerWrapper implements Disposable {
                         }
                     }
                     System.out.println(result);
+                }else if(commandType=="status"){
+                    boolean staging = false;
+                    boolean prod = false;
+                    for(LinkedTreeMap treeMap: (ArrayList<LinkedTreeMap>) map.get("data")){
+                        Map<String, String> dataMap = new HashMap<>();
+                        if(!treeMap.isEmpty() && treeMap.get("status").equals("COMPLETE")){
+                            if(staging==false && treeMap.get("network").equals("STAGING")){
+                                //first record in json response for staging is the active version
+                                staging=true;
+                            }else if(prod==false && treeMap.get("network").equals("PRODUCTION")){
+                                //first record in json response for prod is the active version
+                                prod=true;
+                            }else{
+                                continue;
+                            }
+                            dataMap.put("network", (String)treeMap.get("network"));
+                            dataMap.put("version", (String)treeMap.get("version"));
+                            dataMap.put("activationId", String.valueOf(treeMap.get("activationId")));
+                            result.add(dataMap);
+                        }
+                    }
                 }
             }
             reader.close();
@@ -202,6 +223,25 @@ public class EdgeworkerWrapper implements Disposable {
             return new ArrayList<>();
         }
         return parseListEdgeWorkersTempFile("list-ids", tempFile);
+    }
+
+    public GeneralCommandLine getActiveEdgeWorkerVersionsOnStagingAndProd(String eid, String tempFile){
+        ArrayList<String> cmd = new ArrayList<>();
+        cmd.addAll(Arrays.asList("akamai", "edgeworkers", "status", eid, "--json", tempFile));
+        cmd = addOptionsParams(cmd);
+        GeneralCommandLine commandLine = new GeneralCommandLine(cmd);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public ArrayList<Map<String, String>> getActiveEdgeWorkerVersionsOnStagingAndProd(String eid) throws Exception{
+        File tempFile = FileUtil.createTempFile("tempActiveEdgeWorkerVersions",".json");
+        GeneralCommandLine commandLine = getActiveEdgeWorkerVersionsOnStagingAndProd(eid, tempFile.getPath());
+        Integer exitCode = executeCommand(commandLine);
+        if(null == exitCode || !exitCode.equals(0)){
+            return new ArrayList<>();
+        }
+        return parseListEdgeWorkersTempFile("status", tempFile);
     }
 
     public GeneralCommandLine getCreateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
@@ -261,6 +301,34 @@ public class EdgeworkerWrapper implements Disposable {
         VfsUtil.markDirtyAndRefresh(false, false, true, destinationFolder);
     }
 
+    public GeneralCommandLine getActivateEdgeWorkerCommand(String eid, String version, String network) throws Exception{
+        ArrayList<String> cmd = new ArrayList<>();
+        cmd.addAll(Arrays.asList("akamai", "edgeworkers", "activate", eid, network, version));
+        cmd = addOptionsParams(cmd);
+        GeneralCommandLine commandLine = new GeneralCommandLine(cmd);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public void activateEdgeWorker(String eid, String version, String network) throws Exception{
+        ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
+        commandLines.add(getActivateEdgeWorkerCommand(eid, version, network));
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Activate EdgeWorker", "Activate EdgeWorker.");
+        ProgressManager.getInstance()
+                .runProcessWithProgressSynchronously(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String errorMsg = runCommandsInConsoleView(consoleView, commandLines);
+                        } catch (Exception exception) {
+                            exception.printStackTrace();
+                            Messages.showErrorDialog("EdgeWorker activation failed.", "Error");
+                        }
+
+                    }
+                },"Activating...", false, null);
+    }
+
     private JComponent createConsolePanel(ConsoleView view) {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -280,7 +348,7 @@ public class EdgeworkerWrapper implements Disposable {
     public void uploadEdgeWorker(String eid, String bundlePath) throws Exception{
         ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
         commandLines.add(getUploadEdgeWorkerCommand(eid, bundlePath));
-        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Upload EdgeWorker", "Upload EW");
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Upload EdgeWorker", "Upload EdgeWorker");
         ProgressManager.getInstance()
                 .runProcessWithProgressSynchronously(new Runnable() {
                                                       @Override
