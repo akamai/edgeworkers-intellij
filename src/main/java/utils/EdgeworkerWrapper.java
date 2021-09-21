@@ -82,8 +82,8 @@ public class EdgeworkerWrapper implements Disposable {
         return console;
     }
 
-    private void runCommandsInConsoleView(ConsoleView console, ArrayList<GeneralCommandLine> commandLines) throws ExecutionException {
-
+    private String runCommandsInConsoleView(ConsoleView console, ArrayList<GeneralCommandLine> commandLines) throws ExecutionException {
+        StringBuilder errorMsg = new StringBuilder();
         for(GeneralCommandLine cmdLine: commandLines){
             ProcessHandler processHandler = new OSProcessHandler(cmdLine);
             processHandler.addProcessListener(new ProcessListener() {
@@ -103,11 +103,16 @@ public class EdgeworkerWrapper implements Disposable {
                     if(!outputType.toString().equals("stderr")){
                         console.print(event.getText(), ConsoleViewContentType.NORMAL_OUTPUT);
                     }
+                    else if(!event.getText().contains("\u001b[1G") && !event.getText().contains("\u001b[2K")){
+                        console.print(event.getText(), ConsoleViewContentType.ERROR_OUTPUT);
+                        errorMsg.append(event.getText());
+                    }
                 }
             });
             processHandler.startNotify();
             processHandler.waitFor();
         }
+        return errorMsg.toString();
     }
 
     public GeneralCommandLine getEdgeWorkerVersionListCommand(String eid, String tempFile) throws Exception{
@@ -320,6 +325,38 @@ public class EdgeworkerWrapper implements Disposable {
             System.out.println(" extractTgzFile exitCode");
         }
         return exitCode;
+    }
+
+    public GeneralCommandLine getUpdateEdgeWorkerToSandboxCommand(String eid, String bundlePath){
+        ArrayList<String> command = new ArrayList<>();
+        command.addAll(Arrays.asList("akamai", "sandbox", "update-edgeworker", eid, bundlePath));
+        command = addOptionsParams(command);
+        GeneralCommandLine commandLine = new GeneralCommandLine(command);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public void updateEdgeWorkerToSandbox(String eid, String bundlePath) throws Exception{
+        ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
+        commandLines.add(getUpdateEdgeWorkerToSandboxCommand(eid, bundlePath));
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Update EdgeWorker to the default Sandbox", "Updates the EdgeWorker for the default sandbox.");
+        ProgressManager.getInstance()
+                .runProcessWithProgressSynchronously(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String errorMsg = runCommandsInConsoleView(consoleView, commandLines);
+                            if(errorMsg.isEmpty()){
+                                consoleView.print(resourceBundle.getString("sandbox.testing.info"), ConsoleViewContentType.LOG_INFO_OUTPUT);
+                            }else if(errorMsg.contains(resourceBundle.getString("sandbox.error.doesNotExist"))){
+                                consoleView.print(resourceBundle.getString("sandbox.setup.info.link"), ConsoleViewContentType.LOG_INFO_OUTPUT);
+                            }
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                            Messages.showErrorDialog("EdgeWorker was not updated to the Sandbox!", "Error");
+                        }
+                    }
+                },"Updating...", false, project);
     }
 
     public GeneralCommandLine getCLICommandLineByParams(String ...params){
