@@ -33,6 +33,10 @@ public class CreateAndValidateBundleAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         Project project = event.getProject();
+        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(project);
+        if(edgeworkerWrapper.checkIfAkamaiCliInstalled()==false){
+            return;
+        }
         CreateAndValidateBundleUI createAndValidateBundleUI = new CreateAndValidateBundleUI();
         VirtualFile[] filesToBeCompressed = createAndValidateBundleUI.filesChooser(event);
         if (null == filesToBeCompressed || filesToBeCompressed.length==0){
@@ -49,8 +53,6 @@ public class CreateAndValidateBundleAction extends AnAction {
         PsiFile psiFile =  event.getData(CommonDataKeys.PSI_FILE);
         VirtualFile parentPath = psiFile.getVirtualFile().getParent();
         String currentActionDirectory = parentPath.getCanonicalPath();
-
-        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(project);
 
         try {
             edgeworkerWrapper.createAndValidateBundle(currentActionDirectory, filesToBeCompressed, tarballFileLocation);
