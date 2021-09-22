@@ -1,9 +1,6 @@
 package ui;
 
-import actions.ActivateEdgeWorkerAction;
-import actions.DownloadEdgeWorkerAction;
-import actions.ListEdgeWorkersAction;
-import actions.UploadEdgeWorkerAction;
+import actions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -35,9 +32,13 @@ public class ListEdgeWorkersToolWindow {
         if(null != actionManager.getAction(resourceBundle.getString("action.activateEdgeWorker.id"))){
             actionManager.unregisterAction(resourceBundle.getString("action.activateEdgeWorker.id"));
         }
+        if(null != actionManager.getAction(resourceBundle.getString("action.registerEdgeWorker.id"))){
+            actionManager.unregisterAction(resourceBundle.getString("action.registerEdgeWorker.id"));
+        }
         //register download and activate EdgeWorker actions before registering listEdgeWorker action
         actionManager.registerAction(resourceBundle.getString("action.downloadEdgeWorker.id"), new DownloadEdgeWorkerAction(resourceBundle.getString("action.downloadEdgeWorker.title"), resourceBundle.getString("action.downloadEdgeWorker.desc"), AllIcons.Actions.Download));
         actionManager.registerAction(resourceBundle.getString("action.activateEdgeWorker.id"), new ActivateEdgeWorkerAction(resourceBundle.getString("action.activateEdgeWorker.title"), resourceBundle.getString("action.activateEdgeWorker.desc"), AllIcons.Actions.Install));
+        actionManager.registerAction(resourceBundle.getString("action.registerEdgeWorker.id"), new RegisterEdgeWorkerAction(resourceBundle.getString("action.registerEdgeWorker.title"), resourceBundle.getString("action.registerEdgeWorker.desc"), AllIcons.Actions.AddMulticaret));
         actionManager.registerAction(resourceBundle.getString("action.listEdgeWorkers.id"), new ListEdgeWorkersAction(panel));
         actionManager.registerAction(resourceBundle.getString("action.uploadEdgeWorker.id"), new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), AllIcons.Actions.Upload));
     }
@@ -53,6 +54,7 @@ public class ListEdgeWorkersToolWindow {
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id")), Constraints.FIRST);
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.uploadEdgeWorker.id")), Constraints.LAST);
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.activateEdgeWorker.id")), Constraints.LAST);
+        actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.registerEdgeWorker.id")), Constraints.LAST);
         ActionToolbar actionToolbar = actionManager.createActionToolbar("", actionGroup, true);
         actionToolbar.setTargetComponent(panel);
         panel.setToolbar(actionToolbar.getComponent());
