@@ -48,12 +48,19 @@ public class ActivateEdgeWorkerAction extends AnAction {
                 network = dialog.getSelectedNetwork();
                 System.out.println(eid+" "+version+" "+network);
                 EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(e.getProject());
-                if(null!=eid && null!=version && null!=network){
-                    edgeworkerWrapper.activateEdgeWorker(eid, version, network);
-                }else{
-                    Messages.showErrorDialog("The EdgeWorker ID, Version and Network can't be null", "Error");
+                if(null==eid){
+                    Messages.showErrorDialog("The EdgeWorker ID can't be empty", "Error");
                     return;
                 }
+                if(null==version){
+                    Messages.showErrorDialog("The EdgeWorker version can't be empty", "Error");
+                    return;
+                }
+                if(null==network){
+                    Messages.showErrorDialog("Network can't be empty", "Error");
+                    return;
+                }
+                edgeworkerWrapper.activateEdgeWorker(eid, version, network);
             }else {
                 //cancel button pressed
                 return;
