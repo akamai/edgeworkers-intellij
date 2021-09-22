@@ -21,6 +21,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
+import ui.ActivateEdgeWorkerDialog;
 import utils.EdgeworkerWrapper;
 import javax.swing.*;
 import javax.swing.event.*;
@@ -47,8 +48,11 @@ public class ListEdgeWorkersAction extends AnAction {
         resourceBundle = ResourceBundle.getBundle("ActionBundle");
         ActionManager actionManager = ActionManager.getInstance();
         versionsListActionGroup = new DefaultActionGroup();
-        if(null != actionManager.getAction("DownloadEdgeWorker")){
+        if(null != actionManager.getAction(resourceBundle.getString("action.downloadEdgeWorker.id"))){
             versionsListActionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.downloadEdgeWorker.id")), Constraints.FIRST);
+        }
+        if(null != actionManager.getAction(resourceBundle.getString("action.activateEdgeWorker.id"))){
+            versionsListActionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.activateEdgeWorker.id")), Constraints.LAST);
         }
     }
 
@@ -64,9 +68,20 @@ public class ListEdgeWorkersAction extends AnAction {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
                 if (SwingUtilities.isRightMouseButton(mouseEvent) && null!= tree.getSelectionModel() && tree.getSelectionModel().getSelectionPath().getPath().length==3) {
+                    String edgeWorkerId = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip();
+                    String edgeWorkerVersion = tree.getSelectionModel().getSelectionPath().getPath()[2].toString();
+
                     DownloadEdgeWorkerAction downloadEdgeWorkerAction = (DownloadEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.downloadEdgeWorker.id"));
-                    downloadEdgeWorkerAction.setEdgeWorkerVersion(tree.getSelectionModel().getSelectionPath().getPath()[2].toString());
-                    downloadEdgeWorkerAction.setEdgeWorkerId(tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip());
+                    downloadEdgeWorkerAction.setEdgeWorkerId(edgeWorkerId);
+                    downloadEdgeWorkerAction.setEdgeWorkerVersion(edgeWorkerVersion);
+
+                    ActivateEdgeWorkerAction activateEdgeWorkerAction = (ActivateEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.activateEdgeWorker.id"));
+                    ActivateEdgeWorkerDialog dialog = new ActivateEdgeWorkerDialog();
+                    //[edgeWorkerId - edgeWorkerName] value should be same in tree nodes and dropdown list
+                    dialog.setEdgeWorkersIDInDropdown(tree.getSelectionModel().getSelectionPath().getPath()[1].toString());
+                    dialog.setEdgeWorkerVersionInDropdown(edgeWorkerVersion);
+                    activateEdgeWorkerAction.setDialog(dialog);
+
                     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
                             resourceBundle.getString("listEdgeWorkersToolWindow.listPopup.title"),
                             versionsListActionGroup,
