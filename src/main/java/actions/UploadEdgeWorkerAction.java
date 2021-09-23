@@ -11,9 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ui.EdgeWorkerIdInputDialog;
+import ui.EdgeWorkerIdListDropdownInputDialog;
 import utils.EdgeworkerWrapper;
-
 import javax.swing.*;
 import java.util.ResourceBundle;
 
@@ -79,15 +78,15 @@ public class UploadEdgeWorkerAction extends AnAction {
         }
 
         // prompt user to enter EdgeWorker ID
-        EdgeWorkerIdInputDialog inputDialog = new EdgeWorkerIdInputDialog();
-        Long eid = null;
+        EdgeWorkerIdListDropdownInputDialog inputDialog = new EdgeWorkerIdListDropdownInputDialog();
+        String eid = null;
         if(inputDialog.showAndGet()){
             //ok button pressed
             try {
-                eid = inputDialog.getEdgeWorkerId();
+                eid = inputDialog.getSelectedItem();
             }catch (Exception ex){
                 ex.printStackTrace();
-                Messages.showErrorDialog("Invalid EdgeWorker ID entered.", "Error");
+                Messages.showErrorDialog("Invalid EdgeWorker ID selected.", "Error");
                 return;
             }
         }else {

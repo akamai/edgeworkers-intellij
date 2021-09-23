@@ -196,6 +196,24 @@ public class EdgeworkerWrapper implements Disposable {
                             result.add(dataMap);
                         }
                     }
+                }else if(commandType=="list-groups"){
+                    for(LinkedTreeMap treeMap: (ArrayList<LinkedTreeMap>) map.get("data")){
+                        Map<String, String> dataMap = new HashMap<>();
+                        if(!treeMap.isEmpty()){
+                            Double groupId = (Double)treeMap.get("groupId");
+                            dataMap.put("groupId", String.valueOf(Double.valueOf(groupId).intValue()));
+                            dataMap.put("groupName", (String)treeMap.get("groupName"));
+                            result.add(dataMap);
+                        }
+                    }
+                }else if(commandType=="list-contracts"){
+                    for(LinkedTreeMap treeMap: (ArrayList<LinkedTreeMap>) map.get("data")){
+                        Map<String, String> dataMap = new HashMap<>();
+                        if(!treeMap.isEmpty()){
+                            dataMap.put("ContractIds", (String)treeMap.get("ContractIds"));
+                            result.add(dataMap);
+                        }
+                    }
                 }
             }
             reader.close();
@@ -270,6 +288,7 @@ public class EdgeworkerWrapper implements Disposable {
         }
         return cmd;
     }
+
     public GeneralCommandLine getValidateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile destinationFolder) throws Exception{
         // command for validating Edgeworker bundle
         ArrayList<String> validateBundleCmd = new ArrayList<>();
@@ -313,7 +332,7 @@ public class EdgeworkerWrapper implements Disposable {
     public void activateEdgeWorker(String eid, String version, String network) throws Exception{
         ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
         commandLines.add(getActivateEdgeWorkerCommand(eid, version, network));
-        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Activate EdgeWorker", "Activate EdgeWorker.");
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Activate EdgeWorker", "Activate EdgeWorker");
         ProgressManager.getInstance()
                 .runProcessWithProgressSynchronously(new Runnable() {
                     @Override
@@ -327,6 +346,75 @@ public class EdgeworkerWrapper implements Disposable {
 
                     }
                 },"Activating...", false, null);
+    }
+
+    public GeneralCommandLine getRegisterEdgeWorkerCommand(String groupId, String edgeWorkerName, Integer resourceTierId) throws Exception{
+        ArrayList<String> cmd = new ArrayList<>();
+        cmd.addAll(Arrays.asList("akamai", "edgeworkers", "register", groupId, edgeWorkerName));
+        if(null!=resourceTierId){
+            cmd.addAll(Arrays.asList("--resourceTierId", resourceTierId.toString()));
+        }
+        cmd = addOptionsParams(cmd);
+        GeneralCommandLine commandLine = new GeneralCommandLine(cmd);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public void registerEdgeWorker(String groupId, String edgeWorkerName, Integer resourceTierId) throws Exception{
+        ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
+        commandLines.add(getRegisterEdgeWorkerCommand(groupId, edgeWorkerName, resourceTierId));
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Register EdgeWorker", "Register EdgeWorker");
+        ProgressManager.getInstance()
+                .runProcessWithProgressSynchronously(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String errorMsg = runCommandsInConsoleView(consoleView, commandLines);
+                        } catch (Exception exception) {
+                            exception.printStackTrace();
+                            Messages.showErrorDialog("EdgeWorker registration failed.", "Error");
+                        }
+
+                    }
+                },"Registering...", false, null);
+    }
+
+    public GeneralCommandLine getGroupsListCommand(String tmpFile) throws Exception{
+        ArrayList<String> cmd = new ArrayList<>();
+        cmd.addAll(Arrays.asList("akamai", "edgeworkers", "list-groups", "--json", tmpFile));
+        cmd = addOptionsParams(cmd);
+        GeneralCommandLine commandLine = new GeneralCommandLine(cmd);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public ArrayList<Map<String, String>> getGroupsList() throws Exception{
+        File tempFile = FileUtil.createTempFile("tempGroupsList",".json");
+        GeneralCommandLine commandLine = getGroupsListCommand(tempFile.getPath());
+        Integer exitCode = executeCommand(commandLine);
+        if(null == exitCode || !exitCode.equals(0)){
+            return new ArrayList<>();
+        }
+        return parseListEdgeWorkersTempFile("list-groups", tempFile);
+    }
+
+    public GeneralCommandLine getContractIdsListCommand(String tmpFile) throws Exception{
+        ArrayList<String> cmd = new ArrayList<>();
+        cmd.addAll(Arrays.asList("akamai", "edgeworkers", "list-contracts", "--json", tmpFile));
+        cmd = addOptionsParams(cmd);
+        GeneralCommandLine commandLine = new GeneralCommandLine(cmd);
+        commandLine.setCharset(Charset.forName("UTF-8"));
+        return commandLine;
+    }
+
+    public ArrayList<Map<String, String>> getContractIdsList() throws Exception{
+        File tempFile = FileUtil.createTempFile("tempContractIdsList",".json");
+        GeneralCommandLine commandLine = getContractIdsListCommand(tempFile.getPath());
+        Integer exitCode = executeCommand(commandLine);
+        if(null == exitCode || !exitCode.equals(0)){
+            return new ArrayList<>();
+        }
+        return parseListEdgeWorkersTempFile("list-contracts", tempFile);
     }
 
     private JComponent createConsolePanel(ConsoleView view) {

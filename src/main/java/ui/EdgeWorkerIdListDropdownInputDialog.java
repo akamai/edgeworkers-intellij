@@ -7,7 +7,6 @@ import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.Nullable;
 import utils.EdgeworkerWrapper;
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -31,7 +30,10 @@ public class EdgeWorkerIdListDropdownInputDialog extends DialogWrapper{
 
     @Override
     protected @Nullable JComponent createCenterPanel() {
-        JPanel dialogPanel = new JPanel(new FlowLayout());
+        JPanel dialogPanel = new JPanel();
+        GroupLayout layout = new GroupLayout(dialogPanel);
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
         JBLabel label = new JBLabel("EdgeWorker ID:");
         comboBox = new ComboBox();
         ProgressManager.getInstance()
@@ -49,9 +51,23 @@ public class EdgeWorkerIdListDropdownInputDialog extends DialogWrapper{
                         }
                     }
                 },"Loading...", false, null);
-        comboBox.getItem();
-        dialogPanel.add(label);
-        dialogPanel.add(comboBox);
+
+        layout.setHorizontalGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(label)
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(comboBox)
+                )
+        );
+
+        layout.setVerticalGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(label)
+                        .addComponent(comboBox)
+                )
+        );
+        dialogPanel.setLayout(layout);
         return dialogPanel;
     }
 }
