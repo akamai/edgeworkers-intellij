@@ -35,7 +35,6 @@ public class RegisterEdgeWorkerAction extends AnAction {
                 groupId = dialog.getSelectedGroupId();
                 edgeWorkerName = dialog.getEdgeWorkerName();
                 resourceTierId = dialog.getSelectedResourceTierId();
-                System.out.println(groupId+" "+edgeWorkerName+" "+resourceTierId);
                 EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(e.getProject());
                 if(null==edgeWorkerName){
                     Messages.showErrorDialog("The EdgeWorker Name can't be empty.", "Error");
@@ -49,6 +48,7 @@ public class RegisterEdgeWorkerAction extends AnAction {
                     Messages.showErrorDialog("The Resource Tier can't be empty.", "Error");
                     return;
                 }
+                System.out.println(groupId+" "+edgeWorkerName+" "+resourceTierId);
                 edgeworkerWrapper.registerEdgeWorker(groupId, edgeWorkerName, resourceTierId);
             }else {
                 //cancel button pressed
