@@ -19,12 +19,15 @@ public class SettingsService implements PersistentStateComponent<EdgeWorkersConf
 
     @Override
     public @Nullable EdgeWorkersConfig getState() {
+        if(null!=config && null==config.getEdgercFilePath()){
+            loadState(config);
+        }
         return config;
     }
 
     @Override
     public void loadState(@NotNull EdgeWorkersConfig state) {
-        if(state.getEdgercFilePath().isEmpty()){
+        if(null==state.getEdgercFilePath() || state.getEdgercFilePath().isEmpty()){
             File file = new File(System.getProperty("user.home"));
             //default edgerc file path
             String path = Paths.get(file.getAbsolutePath(),"/.edgerc").toString();

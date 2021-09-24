@@ -13,6 +13,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,8 @@ import config.EdgeWorkersConfig;
 import config.SettingsService;
 import org.jetbrains.annotations.NotNull;
 import ui.CheckAkamaiCLIDialog;
+import ui.EdgeWorkerNotification;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -128,9 +131,6 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempEdgeWorkerVersions",".json");
         GeneralCommandLine listEdgeWorkerVersionsCmd = getEdgeWorkerVersionListCommand(eid, tempFile.getPath());
         Integer exitCode = executeCommand(listEdgeWorkerVersionsCmd);
-        if(null == exitCode || !exitCode.equals(0)){
-            return new ArrayList<>();
-        }
         return parseListEdgeWorkersTempFile("list-versions", tempFile);
     }
 
@@ -215,6 +215,9 @@ public class EdgeworkerWrapper implements Disposable {
                         }
                     }
                 }
+            }else {
+                EdgeWorkerNotification.notifyError(null, (String) map.get("msg"));
+                System.out.println(map.get("msg"));
             }
             reader.close();
             tempFile.delete();
@@ -237,9 +240,6 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempEdgeWorkersIds",".json");
         GeneralCommandLine commandLine = getEdgeWorkersIdsListCommand(tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        if(null == exitCode || !exitCode.equals(0)){
-            return new ArrayList<>();
-        }
         return parseListEdgeWorkersTempFile("list-ids", tempFile);
     }
 
@@ -256,9 +256,6 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempActiveEdgeWorkerVersions",".json");
         GeneralCommandLine commandLine = getActiveEdgeWorkerVersionsOnStagingAndProd(eid, tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        if(null == exitCode || !exitCode.equals(0)){
-            return new ArrayList<>();
-        }
         return parseListEdgeWorkersTempFile("status", tempFile);
     }
 
@@ -392,9 +389,6 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempGroupsList",".json");
         GeneralCommandLine commandLine = getGroupsListCommand(tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        if(null == exitCode || !exitCode.equals(0)){
-            return new ArrayList<>();
-        }
         return parseListEdgeWorkersTempFile("list-groups", tempFile);
     }
 
@@ -411,9 +405,6 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempContractIdsList",".json");
         GeneralCommandLine commandLine = getContractIdsListCommand(tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        if(null == exitCode || !exitCode.equals(0)){
-            return new ArrayList<>();
-        }
         return parseListEdgeWorkersTempFile("list-contracts", tempFile);
     }
 
@@ -524,7 +515,10 @@ public class EdgeworkerWrapper implements Disposable {
     }
 
     public boolean checkIfAkamaiCliInstalled(){
-        final boolean[] akamaiCliInstalled = {false};
+        final boolean[] akamaiCliInstalled = {true};
+        final boolean[] edgeWorkersCliInstalled = {true};
+        final boolean[] sandboxCliInstalled = {true};
+        final boolean[] edgercFileExist = {true};
         final Integer[] exitCode = {1};
         try {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -540,6 +534,7 @@ public class EdgeworkerWrapper implements Disposable {
             }, "Loading...", false, project);
             if (exitCode[0] == 1) {
                 //when akamai cli is not installed
+                akamaiCliInstalled[0]=false;
                 CheckAkamaiCLIDialog checkAkamaiCLIDialog = new CheckAkamaiCLIDialog();
                 checkAkamaiCLIDialog.show();
             } else {
@@ -547,20 +542,27 @@ public class EdgeworkerWrapper implements Disposable {
                     @Override
                     public void run() {
                         try {
-                            akamaiCliInstalled[0] = true;
                             String output = executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "help"));
                             //install Akamai EdgeWorker CLI if not already installed
                             if (!output.contains("edgeworkers")) {
                                 if (executeCommand(getCLICommandLineByParams("akamai", "install", "edgeworkers")) == 1) {
-                                    akamaiCliInstalled[0] = false;
-                                    System.out.println("Error came while installing akamai edgeworkers cli.");
+                                    edgeWorkersCliInstalled[0] = false;
+                                    System.out.println("Error came while installing akamai edgeworkers cli programmatically.");
                                 }
                             }
                             //install Akamai sandbox CLI if not already installed
                             if (!output.contains("sandbox")) {
                                 if (executeCommand(getCLICommandLineByParams("akamai", "install", "sandbox")) == 1) {
-                                    akamaiCliInstalled[0] = false;
-                                    System.out.println("Error came while installing akamai sandbox cli.");
+                                    sandboxCliInstalled[0] = false;
+                                    System.out.println("Error came while installing akamai sandbox cli programmatically.");
+                                }
+                            }
+                            //check if .edgerc file exist
+                            EdgeWorkersConfig config = SettingsService.getInstance().getState();
+                            if(null!=config && null!=config.getEdgercFilePath()){
+                                File file = new File(config.getEdgercFilePath());
+                                if(!file.exists()) {
+                                    edgercFileExist[0] = false;
                                 }
                             }
                         } catch (Exception e) {
@@ -568,11 +570,18 @@ public class EdgeworkerWrapper implements Disposable {
                         }
                     }
                 }, "Loading...", false, project);
+                if(edgeWorkersCliInstalled[0]==false){
+                    Messages.showErrorDialog("Please install akamai edgeworkers cli", "Error");
+                }else if(sandboxCliInstalled[0]==false){
+                    Messages.showErrorDialog("Please install akamai sandbox cli", "Error");
+                }else if(edgercFileExist[0]==false){
+                    Messages.showErrorDialog("Please create and setup .edgerc file and configure EdgeWorkers settings at IntelliJ IDEA > Preferences/Settings > EdgeWorkers Configuration", "Error");
+                }
             }
         }catch (Exception exception){
             exception.printStackTrace();
         }
-        return akamaiCliInstalled[0];
+        return akamaiCliInstalled[0] && edgeWorkersCliInstalled[0] && sandboxCliInstalled[0] && edgercFileExist[0];
     }
 
     @Override
