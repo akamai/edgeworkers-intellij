@@ -17,7 +17,6 @@ public class ActivateEdgeWorkerAction extends AnAction {
 
     public ActivateEdgeWorkerAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
         super(text, description, icon);
-        dialog = new ActivateEdgeWorkerDialog();
         resourceBundle = ResourceBundle.getBundle("ActionBundle");
     }
 
@@ -38,7 +37,7 @@ public class ActivateEdgeWorkerAction extends AnAction {
         String version = null;
         String network = null;
         try {
-            if(dialog.isDisposed()){
+            if(null==dialog || dialog.isDisposed()){
                 dialog = new ActivateEdgeWorkerDialog();
             }
             if(dialog.showAndGet()){

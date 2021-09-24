@@ -27,6 +27,7 @@ public class CheckAkamaiCLIDialog extends DialogWrapper {
         JPanel dialogPanel = new JPanel(new BorderLayout());
         JBLabel label = new JBLabel(resourceBundle.getString("ui.checkAkamaiCliDialog.label"));
         JButton hyperlink = new JButton(resourceBundle.getString("ui.checkAkamaiCliDialog.button"));
+        JBLabel configSettings = new JBLabel(resourceBundle.getString("ui.checkAkamaiCliDialog.edgeworkerConfigLabel"));
         hyperlink.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -41,6 +42,7 @@ public class CheckAkamaiCLIDialog extends DialogWrapper {
         });
         dialogPanel.add(label, BorderLayout.NORTH);
         dialogPanel.add(hyperlink, BorderLayout.CENTER);
+        dialogPanel.add(configSettings, BorderLayout.SOUTH);
         return dialogPanel;
     }
 

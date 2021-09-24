@@ -25,7 +25,7 @@ public class RegisterEdgeWorkerDialog extends DialogWrapper {
     }
 
     public String getSelectedGroupId() throws Exception{
-        if(null!=groupListDropdown){
+        if(null!=groupListDropdown && null!=groupListDropdown.getItem()){
             String group = (String) groupListDropdown.getItem();
             return group.split("-")[0].trim();
         }
