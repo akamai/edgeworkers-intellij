@@ -13,11 +13,11 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,7 +29,6 @@ import config.SettingsService;
 import org.jetbrains.annotations.NotNull;
 import ui.CheckAkamaiCLIDialog;
 import ui.EdgeWorkerNotification;
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -154,6 +153,10 @@ public class EdgeworkerWrapper implements Disposable {
             Gson gson = new Gson();
             Reader reader = Files.newBufferedReader(Paths.get(tempFile.getPath()));
             Map<?, ?> map = gson.fromJson(reader, Map.class);
+            System.out.println(map);
+            if(null==map || null==map.get("cliStatus") || null==map.get("msg") || map.get("msg").toString().isEmpty()){
+                EdgeWorkerNotification.notifyError(null, "Error: Not Authorized.");
+            }
             if(map.get("cliStatus").equals(0.0)){
                 ArrayList<LinkedTreeMap> treeMapList = (ArrayList<LinkedTreeMap>) map.get("data");
                 if(commandType=="list-ids"){
@@ -215,9 +218,8 @@ public class EdgeworkerWrapper implements Disposable {
                         }
                     }
                 }
-            }else {
+            }else if(!map.get("msg").toString().isEmpty()){
                 EdgeWorkerNotification.notifyError(null, (String) map.get("msg"));
-                System.out.println(map.get("msg"));
             }
             reader.close();
             tempFile.delete();
@@ -486,7 +488,7 @@ public class EdgeworkerWrapper implements Disposable {
     public void updateEdgeWorkerToSandbox(String eid, String bundlePath) throws Exception{
         ArrayList<GeneralCommandLine> commandLines = new ArrayList<>();
         commandLines.add(getUpdateEdgeWorkerToSandboxCommand(eid, bundlePath));
-        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Update EdgeWorker to the default Sandbox", "Updates the EdgeWorker for the default sandbox.");
+        ConsoleView consoleView = createConsoleViewOnNewTabOfToolWindow("Update EdgeWorker to Sandbox", "Update EdgeWorker to the default sandbox.");
         ProgressManager.getInstance()
                 .runProcessWithProgressSynchronously(new Runnable() {
                     @Override
