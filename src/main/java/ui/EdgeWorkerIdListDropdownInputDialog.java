@@ -15,7 +15,7 @@ public class EdgeWorkerIdListDropdownInputDialog extends DialogWrapper{
     private ComboBox comboBox;
 
     public String getSelectedItem() throws Exception{
-        if(null!=comboBox){
+        if(null!=comboBox && null!=comboBox.getItem()){
             String edgeWorker = (String) comboBox.getItem();
             return edgeWorker.split("-")[0].trim();
         }

@@ -21,7 +21,7 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
     private EdgeworkerWrapper edgeworkerWrapper;
 
     public String getSelectedEdgeWorkerID() throws Exception{
-        if(null!=edgeWorkersListDropdown){
+        if(null!=edgeWorkersListDropdown && null!=edgeWorkersListDropdown.getItem()){
             String edgeWorker = (String) edgeWorkersListDropdown.getItem();
             return edgeWorker.split("-")[0].trim();
         }

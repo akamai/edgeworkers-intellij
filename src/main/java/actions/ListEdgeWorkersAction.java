@@ -68,20 +68,24 @@ public class ListEdgeWorkersAction extends AnAction {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
                 if (SwingUtilities.isRightMouseButton(mouseEvent) && null!= tree.getSelectionModel() && tree.getSelectionModel().getSelectionPath().getPath().length==3) {
-                    String edgeWorkerId = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip();
-                    String edgeWorkerVersion = tree.getSelectionModel().getSelectionPath().getPath()[2].toString();
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            String edgeWorkerId = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip();
+                            String edgeWorkerVersion = tree.getSelectionModel().getSelectionPath().getPath()[2].toString();
 
-                    DownloadEdgeWorkerAction downloadEdgeWorkerAction = (DownloadEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.downloadEdgeWorker.id"));
-                    downloadEdgeWorkerAction.setEdgeWorkerId(edgeWorkerId);
-                    downloadEdgeWorkerAction.setEdgeWorkerVersion(edgeWorkerVersion);
+                            DownloadEdgeWorkerAction downloadEdgeWorkerAction = (DownloadEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.downloadEdgeWorker.id"));
+                            downloadEdgeWorkerAction.setEdgeWorkerId(edgeWorkerId);
+                            downloadEdgeWorkerAction.setEdgeWorkerVersion(edgeWorkerVersion);
 
-                    ActivateEdgeWorkerAction activateEdgeWorkerAction = (ActivateEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.activateEdgeWorker.id"));
-                    ActivateEdgeWorkerDialog dialog = new ActivateEdgeWorkerDialog();
-                    //[edgeWorkerId - edgeWorkerName] value should be same in tree nodes and dropdown list
-                    dialog.setEdgeWorkersIDInDropdown(tree.getSelectionModel().getSelectionPath().getPath()[1].toString());
-                    dialog.setEdgeWorkerVersionInDropdown(edgeWorkerVersion);
-                    activateEdgeWorkerAction.setDialog(dialog);
-
+                            ActivateEdgeWorkerAction activateEdgeWorkerAction = (ActivateEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.activateEdgeWorker.id"));
+                            ActivateEdgeWorkerDialog dialog = new ActivateEdgeWorkerDialog();
+                            //[edgeWorkerId - edgeWorkerName] value should be same in tree nodes and dropdown list
+                            dialog.setEdgeWorkersIDInDropdown(tree.getSelectionModel().getSelectionPath().getPath()[1].toString());
+                            dialog.setEdgeWorkerVersionInDropdown(edgeWorkerVersion);
+                            activateEdgeWorkerAction.setDialog(dialog);
+                        }
+                    });
                     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
                             resourceBundle.getString("listEdgeWorkersToolWindow.listPopup.title"),
                             versionsListActionGroup,
