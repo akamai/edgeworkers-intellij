@@ -153,7 +153,6 @@ public class EdgeworkerWrapper implements Disposable {
             Gson gson = new Gson();
             Reader reader = Files.newBufferedReader(Paths.get(tempFile.getPath()));
             Map<?, ?> map = gson.fromJson(reader, Map.class);
-            System.out.println(map);
             if(null==map || null==map.get("cliStatus") || null==map.get("msg") || map.get("msg").toString().isEmpty()){
                 EdgeWorkerNotification.notifyError(null, "Error: Not Authorized.");
             }
