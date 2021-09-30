@@ -1,6 +1,7 @@
 package ui;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
@@ -17,6 +18,8 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
     private ComboBox edgeWorkersListDropdown;
     private ComboBox edgeWorkerVersionsDropdown;
     private ComboBox networkDropdown;
+    private String edgeWorkerId;
+    private String edgeWorkerVersion;
 
     private EdgeworkerWrapper edgeworkerWrapper;
 
@@ -56,10 +59,13 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
         return null;
     }
 
-    public ActivateEdgeWorkerDialog() {
-        super(true);
+    public ActivateEdgeWorkerDialog(@Nullable Project project, String edgeWorkerId, String edgeWorkerVersion) {
+        super(project);
+        this.edgeWorkerId = edgeWorkerId;
+        this.edgeWorkerVersion = edgeWorkerVersion;
         setTitle("Activate EdgeWorker");
         init();
+        setOKButtonText("Activate");
     }
 
     @Override
@@ -90,37 +96,43 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
                             for(Map<String, String> map: edgeWorkersIdsList){
                                 edgeWorkersListDropdown.addItem(map.get("edgeWorkerId")+" - "+map.get("name"));
                             }
-                            String eid = getSelectedEdgeWorkerID();
-                            if(null!=eid){
-                                fillEdgeWorkerVersionsDropdown(eid);
-                                fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
+
+                            edgeWorkersListDropdown.addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    ProgressManager.getInstance()
+                                            .runProcessWithProgressSynchronously(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    try {
+                                                        String eid = getSelectedEdgeWorkerID();
+                                                        if(null!=eid){
+                                                            fillEdgeWorkerVersionsDropdown(eid);
+                                                            fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
+                                                        }
+                                                    } catch (Exception exception) {
+                                                        exception.printStackTrace();
+                                                    }
+                                                }
+                                            },"Loading...", false, null);
+                                }
+                            });
+
+                            if(null!=edgeWorkerId && null!=edgeWorkerVersion){
+                                setEdgeWorkersIDInDropdown(edgeWorkerId);
+                                setEdgeWorkerVersionInDropdown(edgeWorkerVersion);
+                            }else{
+                                String eid = getSelectedEdgeWorkerID();
+                                if(null!=eid){
+                                    fillEdgeWorkerVersionsDropdown(eid);
+                                    fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
+                                }
                             }
                         } catch (Exception exception) {
                             exception.printStackTrace();
                         }
                     }
                 },"Loading...", false, null);
-
-        edgeWorkersListDropdown.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ProgressManager.getInstance()
-                        .runProcessWithProgressSynchronously(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    String eid = getSelectedEdgeWorkerID();
-                                    if(null!=eid){
-                                        fillEdgeWorkerVersionsDropdown(eid);
-                                        fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
-                                    }
-                                } catch (Exception exception) {
-                                    exception.printStackTrace();
-                                }
-                            }
-                        },"Loading...", false, null);
-            }
-        });
 
         layout.setHorizontalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)

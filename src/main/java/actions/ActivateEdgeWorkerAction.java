@@ -14,6 +14,24 @@ public class ActivateEdgeWorkerAction extends AnAction {
 
     private ResourceBundle resourceBundle;
     private ActivateEdgeWorkerDialog dialog;
+    private String edgeWorkerId;
+    private String edgeWorkerVersion;
+
+    public String getEdgeWorkerId() {
+        return edgeWorkerId;
+    }
+
+    public void setEdgeWorkerId(String edgeWorkerId) {
+        this.edgeWorkerId = edgeWorkerId;
+    }
+
+    public String getEdgeWorkerVersion() {
+        return edgeWorkerVersion;
+    }
+
+    public void setEdgeWorkerVersion(String edgeWorkerVersion) {
+        this.edgeWorkerVersion = edgeWorkerVersion;
+    }
 
     public ActivateEdgeWorkerAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
         super(text, description, icon);
@@ -38,7 +56,7 @@ public class ActivateEdgeWorkerAction extends AnAction {
         String network = null;
         try {
             if(null==dialog || dialog.isDisposed()){
-                dialog = new ActivateEdgeWorkerDialog();
+                dialog = new ActivateEdgeWorkerDialog(e.getProject(), edgeWorkerId, edgeWorkerVersion);
             }
             if(dialog.showAndGet()){
                 //ok button pressed

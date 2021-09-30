@@ -22,6 +22,7 @@ public class RegisterEdgeWorkerDialog extends DialogWrapper {
         super(true);
         setTitle("Register EdgeWorker");
         init();
+        setOKButtonText("Register");
     }
 
     public String getSelectedGroupId() throws Exception{
