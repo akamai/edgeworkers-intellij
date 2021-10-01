@@ -95,6 +95,7 @@ public class ListEdgeWorkersAction extends AnAction {
             @Override
             public void run() {
                 try {
+                    ProgressManager.getInstance().getProgressIndicator().setText("Refreshing...");
                     ArrayList<Map<String, String>> edgeWorkersList  = edgeworkerWrapper.getEdgeWorkersIdsList();
                     for(Map<String, String> map: edgeWorkersList){
                         DefaultMutableTreeNode node = new DefaultMutableTreeNode(map.get("edgeWorkerId")+" - "+map.get("name"));
@@ -124,7 +125,7 @@ public class ListEdgeWorkersAction extends AnAction {
                     loading=false;
                 }
             }
-        }, "Refreshing...", false, e.getProject());
+        }, "EdgeWorkers List", false, e.getProject());
     }
 
     private void addTreeSpeedSearch(Tree tree){
@@ -151,6 +152,7 @@ public class ListEdgeWorkersAction extends AnAction {
                 ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
                     @Override
                     public void run() {
+                        ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                         if(null != event.getPath().getParentPath() && event.getPath().getParentPath().toString().equals("["+resourceBundle.getString("listEdgeWorkersToolWindow.panel.title")+"]")){
                             String eid = event.getPath().getLastPathComponent().toString().split("-")[0].trim();
                             try{
@@ -166,7 +168,7 @@ public class ListEdgeWorkersAction extends AnAction {
                                 e.printStackTrace();
                             }
                         }
-                    }}, "Loading...", false, actionEvent.getProject());
+                    }}, "", false, actionEvent.getProject());
             }
             @Override
             public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
@@ -224,6 +226,7 @@ public class ListEdgeWorkersAction extends AnAction {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                             File tempDirectory = new File(FileUtil.getTempDirectory()+"/tempEdgeWorkersDownload_"+eid+"_"+version);
                             //delete all edgeWorker files inside tempEdgeWorkersDownload_ directory and download them again
                             if(tempDirectory.exists()){
@@ -252,7 +255,7 @@ public class ListEdgeWorkersAction extends AnAction {
                             ex.printStackTrace();
                         }
                     }
-                },"Loading...", false, anActionEvent.getProject());
+                },"", false, anActionEvent.getProject());
 
             }else if(tree.getSelectionModel().getSelectionPath().getPathCount() == 4){
                 String eid = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip().trim();

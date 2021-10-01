@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ui.EdgeWorkerNotification;
 import utils.EdgeworkerWrapper;
 
 import javax.swing.*;
@@ -50,16 +51,18 @@ public class DownloadEdgeWorkerAction extends AnAction {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Downloading...");
                             Integer exitCode = edgeworkerWrapper.downloadEdgeWorker(edgeWorkerId, edgeWorkerVersion, vfs[0].getCanonicalPath());
                             VfsUtil.markDirtyAndRefresh(false, false, true, vfs[0]);
                             if(null == exitCode || !exitCode.equals(0)){
                                 System.out.println("Downloading EdgeWorker failed!");
+                                EdgeWorkerNotification.notifyError(event.getProject(), "Error: Downloading EdgeWorker failed!");
                             }
                         }catch (Exception e){
                             e.printStackTrace();
                         }
                     }
-                }, "Downloading...", false, event.getProject());
+                }, "Download EdgeWorker", false, event.getProject());
     }
 
     @Override

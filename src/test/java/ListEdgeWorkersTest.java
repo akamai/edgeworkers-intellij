@@ -61,18 +61,18 @@ public class ListEdgeWorkersTest extends BasePlatformTestCase{
         assertEquals("akamai [edgeworkers, list-ids, --json, tmpFile]", commandLine.toString());
     }
 
-    public void test_parseListEdgeWorkersTempFile_whenListIds() throws Exception{
+    public void test_parseEdgeWorkersTempFile_whenListIds() throws Exception{
         PsiFile psiFile = myFixture.configureByFile("tempEdgeWorkersIds.json");
         String path = psiFile.getVirtualFile().getCanonicalPath();
-        ArrayList<Map<String, String>> result = edgeworkerWrapper.parseListEdgeWorkersTempFile("list-ids", Paths.get(path).toFile());
+        ArrayList<Map<String, String>> result = edgeworkerWrapper.parseEdgeWorkersTempFile("list-ids", Paths.get(path).toFile());
         assertEquals(result.size(), 2);
         assertEquals(result.toString(), "[{edgeWorkerId=8, name=ew_test}, {edgeWorkerId=9, name=EdgeWorker for MoFroYo Cart Count}]");
     }
 
-    public void test_parseListEdgeWorkersTempFile_whenListVersions() throws Exception{
+    public void test_parseEdgeWorkersTempFile_whenListVersions() throws Exception{
         PsiFile psiFile = myFixture.configureByFile("tempEdgeWorkerVersions.json");
         String path = psiFile.getVirtualFile().getCanonicalPath();
-        ArrayList<Map<String, String>> result = edgeworkerWrapper.parseListEdgeWorkersTempFile("list-versions", Paths.get(path).toFile());
+        ArrayList<Map<String, String>> result = edgeworkerWrapper.parseEdgeWorkersTempFile("list-versions", Paths.get(path).toFile());
         assertEquals(result.size(), 8);
         assertEquals(result.toString(), "[{version=1.0}, {version=1.1}, {version=1}, {version=1.3}, {version=5.0}, {version=6.0}, {version=7.0}, {version=9.0}]");
     }

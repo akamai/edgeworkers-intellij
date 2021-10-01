@@ -58,6 +58,10 @@ public class ActivateEdgeWorkerAction extends AnAction {
             if(null==dialog || dialog.isDisposed()){
                 dialog = new ActivateEdgeWorkerDialog(e.getProject(), edgeWorkerId, edgeWorkerVersion);
             }
+            if(null==dialog.getSelectedEdgeWorkerID()){
+                dialog.disposeIfNeeded();
+                return;
+            }
             if(dialog.showAndGet()){
                 //ok button pressed
                 eid = dialog.getSelectedEdgeWorkerID();

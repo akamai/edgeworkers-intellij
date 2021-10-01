@@ -80,6 +80,13 @@ public class UploadEdgeWorkerAction extends AnAction {
         // prompt user to enter EdgeWorker ID
         EdgeWorkerIdListDropdownInputDialog inputDialog = new EdgeWorkerIdListDropdownInputDialog();
         String eid = null;
+        try {
+            if(null==inputDialog.getSelectedItem()){
+                return;
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
         if(inputDialog.showAndGet()){
             //ok button pressed
             try {

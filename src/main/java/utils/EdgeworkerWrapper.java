@@ -17,7 +17,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -130,7 +129,7 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempEdgeWorkerVersions",".json");
         GeneralCommandLine listEdgeWorkerVersionsCmd = getEdgeWorkerVersionListCommand(eid, tempFile.getPath());
         Integer exitCode = executeCommand(listEdgeWorkerVersionsCmd);
-        return parseListEdgeWorkersTempFile("list-versions", tempFile);
+        return parseEdgeWorkersTempFile("list-versions", tempFile);
     }
 
     public String executeCommandAndGetOutput(GeneralCommandLine commandLine) throws Exception{
@@ -147,7 +146,7 @@ public class EdgeworkerWrapper implements Disposable {
         return processHandler.getExitCode();
     }
 
-    public ArrayList<Map<String, String>> parseListEdgeWorkersTempFile(String commandType, File tempFile){
+    public ArrayList<Map<String, String>> parseEdgeWorkersTempFile(String commandType, File tempFile){
         ArrayList<Map<String, String>> result = new ArrayList<>();
         try {
             Gson gson = new Gson();
@@ -224,6 +223,7 @@ public class EdgeworkerWrapper implements Disposable {
             tempFile.delete();
         } catch(Exception e) {
             e.printStackTrace();
+            EdgeWorkerNotification.notifyError(null, "Error in executing Akamai CLI command.");
         }
         return result;
     }
@@ -241,7 +241,7 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempEdgeWorkersIds",".json");
         GeneralCommandLine commandLine = getEdgeWorkersIdsListCommand(tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        return parseListEdgeWorkersTempFile("list-ids", tempFile);
+        return parseEdgeWorkersTempFile("list-ids", tempFile);
     }
 
     public GeneralCommandLine getActiveEdgeWorkerVersionsOnStagingAndProd(String eid, String tempFile){
@@ -257,7 +257,7 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempActiveEdgeWorkerVersions",".json");
         GeneralCommandLine commandLine = getActiveEdgeWorkerVersionsOnStagingAndProd(eid, tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        return parseListEdgeWorkersTempFile("status", tempFile);
+        return parseEdgeWorkersTempFile("status", tempFile);
     }
 
     public GeneralCommandLine getCreateBundleCommand(@NotNull String workDirectory, @NotNull VirtualFile[] ew_files, @NotNull VirtualFile destinationFolder) throws Exception{
@@ -308,13 +308,14 @@ public class EdgeworkerWrapper implements Disposable {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Creating and Validating Bundle...");
                             runCommandsInConsoleView(consoleView, commandLines);
                         } catch (ExecutionException e) {
                             System.out.println("Command Execution failed!"+ e);
-                            Messages.showErrorDialog("Edgeworker bundle not created!", "Error");
+                            Messages.showErrorDialog("EdgeWorker Bundle not created!", "Error");
                         }
                     }
-                },"Creating and Validating...", false, project);
+                },"", false, project);
         VfsUtil.markDirtyAndRefresh(false, false, true, destinationFolder);
     }
 
@@ -336,6 +337,7 @@ public class EdgeworkerWrapper implements Disposable {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Activating...");
                             String errorMsg = runCommandsInConsoleView(consoleView, commandLines);
                         } catch (Exception exception) {
                             exception.printStackTrace();
@@ -343,7 +345,7 @@ public class EdgeworkerWrapper implements Disposable {
                         }
 
                     }
-                },"Activating...", false, null);
+                },"Activate EdgeWorker", false, null);
     }
 
     public GeneralCommandLine getRegisterEdgeWorkerCommand(String groupId, String edgeWorkerName, Integer resourceTierId) throws Exception{
@@ -367,6 +369,7 @@ public class EdgeworkerWrapper implements Disposable {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Registering...");
                             String errorMsg = runCommandsInConsoleView(consoleView, commandLines);
                         } catch (Exception exception) {
                             exception.printStackTrace();
@@ -374,7 +377,7 @@ public class EdgeworkerWrapper implements Disposable {
                         }
 
                     }
-                },"Registering...", false, null);
+                },"Register EdgeWorker", false, null);
     }
 
     public GeneralCommandLine getGroupsListCommand(String tmpFile) throws Exception{
@@ -390,7 +393,7 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempGroupsList",".json");
         GeneralCommandLine commandLine = getGroupsListCommand(tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        return parseListEdgeWorkersTempFile("list-groups", tempFile);
+        return parseEdgeWorkersTempFile("list-groups", tempFile);
     }
 
     public GeneralCommandLine getContractIdsListCommand(String tmpFile) throws Exception{
@@ -406,7 +409,7 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempContractIdsList",".json");
         GeneralCommandLine commandLine = getContractIdsListCommand(tempFile.getPath());
         Integer exitCode = executeCommand(commandLine);
-        return parseListEdgeWorkersTempFile("list-contracts", tempFile);
+        return parseEdgeWorkersTempFile("list-contracts", tempFile);
     }
 
     private JComponent createConsolePanel(ConsoleView view) {
@@ -434,13 +437,14 @@ public class EdgeworkerWrapper implements Disposable {
                                                       @Override
                                                       public void run() {
                                                           try {
+                                                              ProgressManager.getInstance().getProgressIndicator().setText("Uploading...");
                                                               runCommandsInConsoleView(consoleView, commandLines);
                                                           } catch (ExecutionException e) {
                                                               e.printStackTrace();
                                                               Messages.showErrorDialog("EdgeWorker was not uploaded!", "Error");
                                                           }
                                                       }
-                                                  },"Uploading...", false, project);
+                                                  },"Upload EdgeWorker", false, project);
     }
 
     public GeneralCommandLine getEdgeWorkerDownloadCommand(String eid, String versionId, String downloadPath) throws Exception{
@@ -493,6 +497,7 @@ public class EdgeworkerWrapper implements Disposable {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Updating...");
                             String errorMsg = runCommandsInConsoleView(consoleView, commandLines);
                             if(errorMsg.isEmpty()){
                                 consoleView.print(resourceBundle.getString("sandbox.testing.info"), ConsoleViewContentType.LOG_INFO_OUTPUT);
@@ -504,7 +509,7 @@ public class EdgeworkerWrapper implements Disposable {
                             Messages.showErrorDialog("EdgeWorker was not updated to the Sandbox!", "Error");
                         }
                     }
-                },"Updating...", false, project);
+                },"Update EdgeWorker to Sandbox", false, project);
     }
 
     public GeneralCommandLine getCLICommandLineByParams(String ...params){
@@ -526,13 +531,14 @@ public class EdgeworkerWrapper implements Disposable {
                 @Override
                 public void run() {
                     try {
+                        ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                         //check if akamai cli is installed
                         exitCode[0] = executeCommand(getCLICommandLineByParams("akamai", "--version"));
                     } catch (Exception exception) {
                         exception.printStackTrace();
                     }
                 }
-            }, "Loading...", false, project);
+            }, "", false, project);
             if (exitCode[0] == 1) {
                 //when akamai cli is not installed
                 akamaiCliInstalled[0]=false;
@@ -543,6 +549,7 @@ public class EdgeworkerWrapper implements Disposable {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                             String output = executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "help"));
                             //install Akamai EdgeWorker CLI if not already installed
                             if (!output.contains("edgeworkers")) {
@@ -570,7 +577,7 @@ public class EdgeworkerWrapper implements Disposable {
                             e.printStackTrace();
                         }
                     }
-                }, "Loading...", false, project);
+                }, "", false, project);
                 if(edgeWorkersCliInstalled[0]==false){
                     Messages.showErrorDialog("Please install akamai edgeworkers cli", "Error");
                 }else if(sandboxCliInstalled[0]==false){
