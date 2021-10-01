@@ -41,6 +41,7 @@ public class EdgeWorkerIdListDropdownInputDialog extends DialogWrapper{
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                             EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper();
                             ArrayList<Map<String, String>> edgeWorkersIdsList = edgeworkerWrapper.getEdgeWorkersIdsList();
                             for(Map<String, String> map: edgeWorkersIdsList){
@@ -50,7 +51,7 @@ public class EdgeWorkerIdListDropdownInputDialog extends DialogWrapper{
                             exception.printStackTrace();
                         }
                     }
-                },"Loading...", false, null);
+                },"", false, null);
 
         layout.setHorizontalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)

@@ -91,37 +91,22 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
                 .runProcessWithProgressSynchronously(new Runnable() {
                     @Override
                     public void run() {
+                        ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                         try {
                             ArrayList<Map<String, String>> edgeWorkersIdsList = edgeworkerWrapper.getEdgeWorkersIdsList();
                             for(Map<String, String> map: edgeWorkersIdsList){
                                 edgeWorkersListDropdown.addItem(map.get("edgeWorkerId")+" - "+map.get("name"));
                             }
 
-                            edgeWorkersListDropdown.addActionListener(new ActionListener() {
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    ProgressManager.getInstance()
-                                            .runProcessWithProgressSynchronously(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    try {
-                                                        String eid = getSelectedEdgeWorkerID();
-                                                        if(null!=eid){
-                                                            fillEdgeWorkerVersionsDropdown(eid);
-                                                            fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
-                                                        }
-                                                    } catch (Exception exception) {
-                                                        exception.printStackTrace();
-                                                    }
-                                                }
-                                            },"Loading...", false, null);
-                                }
-                            });
-
                             if(null!=edgeWorkerId && null!=edgeWorkerVersion){
+                                //when Activate EdgeWorker menu item is selected from the EdgeWorker Panel's right click menu items
                                 setEdgeWorkersIDInDropdown(edgeWorkerId);
+                                String eid = getSelectedEdgeWorkerID();
+                                fillEdgeWorkerVersionsDropdown(eid);
+                                fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
                                 setEdgeWorkerVersionInDropdown(edgeWorkerVersion);
                             }else{
+                                //when Activate EdgeWorker button is clicked from the EdgeWorker Panel's toolbar
                                 String eid = getSelectedEdgeWorkerID();
                                 if(null!=eid){
                                     fillEdgeWorkerVersionsDropdown(eid);
@@ -132,7 +117,29 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
                             exception.printStackTrace();
                         }
                     }
-                },"Loading...", false, null);
+                },"Activate EdgeWorkers", false, null);
+
+        edgeWorkersListDropdown.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ProgressManager.getInstance()
+                        .runProcessWithProgressSynchronously(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
+                                    String eid = getSelectedEdgeWorkerID();
+                                    if(null!=eid){
+                                        fillEdgeWorkerVersionsDropdown(eid);
+                                        fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
+                                    }
+                                } catch (Exception exception) {
+                                    exception.printStackTrace();
+                                }
+                            }
+                        },"", false, null);
+            }
+        });
 
         layout.setHorizontalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
