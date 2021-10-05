@@ -127,7 +127,7 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
                             @Override
                             public void run() {
                                 try {
-                                    ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
+                                    ProgressManager.getInstance().getProgressIndicator().setText("Updating EdgeWorker Version Dropdown...");
                                     String eid = getSelectedEdgeWorkerID();
                                     if(null!=eid){
                                         fillEdgeWorkerVersionsDropdown(eid);

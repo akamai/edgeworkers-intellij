@@ -525,7 +525,6 @@ public class EdgeworkerWrapper implements Disposable {
         final boolean[] edgeWorkersCliInstalled = {true};
         final boolean[] sandboxCliInstalled = {true};
         final boolean[] edgercFileExist = {true};
-        final Integer[] exitCode = {1};
         try {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
                 @Override
@@ -533,26 +532,13 @@ public class EdgeworkerWrapper implements Disposable {
                     try {
                         ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                         //check if akamai cli is installed
-                        exitCode[0] = executeCommand(getCLICommandLineByParams("akamai", "--version"));
-                    } catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
-                }
-            }, "", false, project);
-            if (exitCode[0] == 1) {
-                //when akamai cli is not installed
-                akamaiCliInstalled[0]=false;
-                CheckAkamaiCLIDialog checkAkamaiCLIDialog = new CheckAkamaiCLIDialog();
-                checkAkamaiCLIDialog.show();
-            } else {
-                ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
-                            String output = executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "help"));
+                        String output = executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "help"));
+                        if (!output.contains("akamai")) {
+                            akamaiCliInstalled[0]=false;
+                        }else{
                             //install Akamai EdgeWorker CLI if not already installed
                             if (!output.contains("edgeworkers")) {
+                                ProgressManager.getInstance().getProgressIndicator().setText("Installing Akamai EdgeWorkers CLI...");
                                 if (executeCommand(getCLICommandLineByParams("akamai", "install", "edgeworkers")) == 1) {
                                     edgeWorkersCliInstalled[0] = false;
                                     System.out.println("Error came while installing akamai edgeworkers cli programmatically.");
@@ -560,6 +546,7 @@ public class EdgeworkerWrapper implements Disposable {
                             }
                             //install Akamai sandbox CLI if not already installed
                             if (!output.contains("sandbox")) {
+                                ProgressManager.getInstance().getProgressIndicator().setText("Installing Akamai Sandbox CLI...");
                                 if (executeCommand(getCLICommandLineByParams("akamai", "install", "sandbox")) == 1) {
                                     sandboxCliInstalled[0] = false;
                                     System.out.println("Error came while installing akamai sandbox cli programmatically.");
@@ -573,18 +560,24 @@ public class EdgeworkerWrapper implements Disposable {
                                     edgercFileExist[0] = false;
                                 }
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
+                    } catch (Exception exception) {
+                        akamaiCliInstalled[0]=false;
+                        exception.printStackTrace();
                     }
-                }, "", false, project);
-                if(edgeWorkersCliInstalled[0]==false){
-                    Messages.showErrorDialog("Please install akamai edgeworkers cli", "Error");
-                }else if(sandboxCliInstalled[0]==false){
-                    Messages.showErrorDialog("Please install akamai sandbox cli", "Error");
-                }else if(edgercFileExist[0]==false){
-                    Messages.showErrorDialog("Please create and setup .edgerc file and configure EdgeWorkers settings at IntelliJ IDEA > Preferences/Settings > EdgeWorkers Configuration", "Error");
                 }
+            }, "", false, project);
+            if(akamaiCliInstalled[0]==false){
+                //when akamai cli is not installed
+                CheckAkamaiCLIDialog checkAkamaiCLIDialog = new CheckAkamaiCLIDialog();
+                checkAkamaiCLIDialog.show();
+            }
+            else if(edgeWorkersCliInstalled[0]==false){
+                Messages.showErrorDialog("Please install akamai edgeworkers cli", "Error");
+            }else if(sandboxCliInstalled[0]==false){
+                Messages.showErrorDialog("Please install akamai sandbox cli", "Error");
+            }else if(edgercFileExist[0]==false){
+                Messages.showErrorDialog("Please create and setup .edgerc file and configure EdgeWorkers settings at IntelliJ IDEA > Preferences/Settings > EdgeWorkers Configuration", "Error");
             }
         }catch (Exception exception){
             exception.printStackTrace();
