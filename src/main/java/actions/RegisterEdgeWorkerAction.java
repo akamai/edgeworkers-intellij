@@ -30,6 +30,9 @@ public class RegisterEdgeWorkerAction extends AnAction {
         Integer resourceTierId = null;
         try {
             RegisterEdgeWorkerDialog dialog = new RegisterEdgeWorkerDialog();
+            if(null==dialog.getSelectedGroupId()){
+                return;
+            }
             if(dialog.showAndGet()){
                 //ok button pressed
                 groupId = dialog.getSelectedGroupId();
