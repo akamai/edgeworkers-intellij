@@ -22,6 +22,7 @@ public class RegisterEdgeWorkerDialog extends DialogWrapper {
         super(true);
         setTitle("Register EdgeWorker");
         init();
+        setOKButtonText("Register");
     }
 
     public String getSelectedGroupId() throws Exception{
@@ -71,6 +72,7 @@ public class RegisterEdgeWorkerDialog extends DialogWrapper {
                     @Override
                     public void run() {
                         try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                             ArrayList<Map<String, String>> groupsList = edgeworkerWrapper.getGroupsList();
                             for(Map<String, String> map: groupsList){
                                 groupListDropdown.addItem(map.get("groupId")+" - "+map.get("groupName"));
@@ -79,7 +81,7 @@ public class RegisterEdgeWorkerDialog extends DialogWrapper {
                             exception.printStackTrace();
                         }
                     }
-                },"Loading...", false, null);
+                },"Register EdgeWorker", false, null);
 
         layout.setHorizontalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)

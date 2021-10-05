@@ -1,6 +1,7 @@
 package ui;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
@@ -17,6 +18,8 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
     private ComboBox edgeWorkersListDropdown;
     private ComboBox edgeWorkerVersionsDropdown;
     private ComboBox networkDropdown;
+    private String edgeWorkerId;
+    private String edgeWorkerVersion;
 
     private EdgeworkerWrapper edgeworkerWrapper;
 
@@ -56,10 +59,13 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
         return null;
     }
 
-    public ActivateEdgeWorkerDialog() {
-        super(true);
+    public ActivateEdgeWorkerDialog(@Nullable Project project, String edgeWorkerId, String edgeWorkerVersion) {
+        super(project);
+        this.edgeWorkerId = edgeWorkerId;
+        this.edgeWorkerVersion = edgeWorkerVersion;
         setTitle("Activate EdgeWorker");
         init();
+        setOKButtonText("Activate");
     }
 
     @Override
@@ -85,21 +91,33 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
                 .runProcessWithProgressSynchronously(new Runnable() {
                     @Override
                     public void run() {
+                        ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                         try {
                             ArrayList<Map<String, String>> edgeWorkersIdsList = edgeworkerWrapper.getEdgeWorkersIdsList();
                             for(Map<String, String> map: edgeWorkersIdsList){
                                 edgeWorkersListDropdown.addItem(map.get("edgeWorkerId")+" - "+map.get("name"));
                             }
-                            String eid = getSelectedEdgeWorkerID();
-                            if(null!=eid){
+
+                            if(null!=edgeWorkerId && null!=edgeWorkerVersion){
+                                //when Activate EdgeWorker menu item is selected from the EdgeWorker Panel's right click menu items
+                                setEdgeWorkersIDInDropdown(edgeWorkerId);
+                                String eid = getSelectedEdgeWorkerID();
                                 fillEdgeWorkerVersionsDropdown(eid);
                                 fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
+                                setEdgeWorkerVersionInDropdown(edgeWorkerVersion);
+                            }else{
+                                //when Activate EdgeWorker button is clicked from the EdgeWorker Panel's toolbar
+                                String eid = getSelectedEdgeWorkerID();
+                                if(null!=eid){
+                                    fillEdgeWorkerVersionsDropdown(eid);
+                                    fillActiveEdgeWorkerVersionOnStagingAndProd(eid, stagingActiveVersionValue, prodActiveVersionValue);
+                                }
                             }
                         } catch (Exception exception) {
                             exception.printStackTrace();
                         }
                     }
-                },"Loading...", false, null);
+                },"Activate EdgeWorkers", false, null);
 
         edgeWorkersListDropdown.addActionListener(new ActionListener() {
             @Override
@@ -109,6 +127,7 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
                             @Override
                             public void run() {
                                 try {
+                                    ProgressManager.getInstance().getProgressIndicator().setText("Updating EdgeWorker Version Dropdown...");
                                     String eid = getSelectedEdgeWorkerID();
                                     if(null!=eid){
                                         fillEdgeWorkerVersionsDropdown(eid);
@@ -118,7 +137,7 @@ public class ActivateEdgeWorkerDialog extends DialogWrapper {
                                     exception.printStackTrace();
                                 }
                             }
-                        },"Loading...", false, null);
+                        },"", false, null);
             }
         });
 

@@ -21,7 +21,6 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
-import ui.ActivateEdgeWorkerDialog;
 import utils.EdgeworkerWrapper;
 import javax.swing.*;
 import javax.swing.event.*;
@@ -40,6 +39,7 @@ public class ListEdgeWorkersAction extends AnAction {
     private ResourceBundle resourceBundle;
     private boolean loading;
     DefaultActionGroup versionsListActionGroup;
+    private boolean treeWillCollapseRan = false;
 
     public ListEdgeWorkersAction(SimpleToolWindowPanel panel) {
         super();
@@ -63,35 +63,18 @@ public class ListEdgeWorkersAction extends AnAction {
         presentation.setEnabled(!loading);
     }
 
-    public void addRightClickMouseEventListener(Tree tree, AnActionEvent e){
+    public void addMouseEventListener(Tree tree, EdgeworkerWrapper edgeworkerWrapper, AnActionEvent e){
         tree.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                if (SwingUtilities.isRightMouseButton(mouseEvent) && null!= tree.getSelectionModel() && tree.getSelectionModel().getSelectionPath().getPath().length==3) {
-                    ApplicationManager.getApplication().invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            String edgeWorkerId = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip();
-                            String edgeWorkerVersion = tree.getSelectionModel().getSelectionPath().getPath()[2].toString();
-
-                            DownloadEdgeWorkerAction downloadEdgeWorkerAction = (DownloadEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.downloadEdgeWorker.id"));
-                            downloadEdgeWorkerAction.setEdgeWorkerId(edgeWorkerId);
-                            downloadEdgeWorkerAction.setEdgeWorkerVersion(edgeWorkerVersion);
-
-                            ActivateEdgeWorkerAction activateEdgeWorkerAction = (ActivateEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.activateEdgeWorker.id"));
-                            ActivateEdgeWorkerDialog dialog = new ActivateEdgeWorkerDialog();
-                            //[edgeWorkerId - edgeWorkerName] value should be same in tree nodes and dropdown list
-                            dialog.setEdgeWorkersIDInDropdown(tree.getSelectionModel().getSelectionPath().getPath()[1].toString());
-                            dialog.setEdgeWorkerVersionInDropdown(edgeWorkerVersion);
-                            activateEdgeWorkerAction.setDialog(dialog);
-                        }
-                    });
-                    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-                            resourceBundle.getString("listEdgeWorkersToolWindow.listPopup.title"),
-                            versionsListActionGroup,
-                            e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-                    popup.setMinimumSize(new Dimension(240, -1));
-                    popup.showInScreenCoordinates(mouseEvent.getComponent(), mouseEvent.getLocationOnScreen());
+                if(treeWillCollapseRan==false){
+                    if (SwingUtilities.isRightMouseButton(mouseEvent)) {
+                        rightMouseButtonClicked(tree, edgeworkerWrapper, e, mouseEvent);
+                    }else if(SwingUtilities.isLeftMouseButton(mouseEvent)){
+                        leftMouseButtonClicked(tree, edgeworkerWrapper, e, mouseEvent);
+                    }
+                }else {
+                    treeWillCollapseRan=false;
                 }
             }
         });
@@ -104,16 +87,16 @@ public class ListEdgeWorkersAction extends AnAction {
         }
         loading=true;
         update(e);
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(resourceBundle.getString("listEdgeWorkersToolWindow.panel.title"));
+        Tree tree = new Tree(rootNode);
+        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper();
+        addMouseEventListener(tree, edgeworkerWrapper, e);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
             @Override
             public void run() {
-                DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(resourceBundle.getString("listEdgeWorkersToolWindow.panel.title"));
-                Tree tree = new Tree(rootNode);
-                addRightClickMouseEventListener(tree, e);
-                EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper();
-                ArrayList<Map<String, String>> edgeWorkersList = null;
                 try {
-                    edgeWorkersList = edgeworkerWrapper.getEdgeWorkersIdsList();
+                    ProgressManager.getInstance().getProgressIndicator().setText("Refreshing...");
+                    ArrayList<Map<String, String>> edgeWorkersList  = edgeworkerWrapper.getEdgeWorkersIdsList();
                     for(Map<String, String> map: edgeWorkersList){
                         DefaultMutableTreeNode node = new DefaultMutableTreeNode(map.get("edgeWorkerId")+" - "+map.get("name"));
                         node.add(new DefaultMutableTreeNode("Versions"));
@@ -123,7 +106,6 @@ public class ListEdgeWorkersAction extends AnAction {
                     addTreeSpeedSearch(tree);
                     addColoredTreeCellRenderer(tree);
                     addTreeWillExpandListener(tree, edgeworkerWrapper, e);
-                    addTreeSelectionListener(tree, edgeworkerWrapper, e);
 
                     //wrap UI update related code inside invokeAndWait
                     ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -143,7 +125,7 @@ public class ListEdgeWorkersAction extends AnAction {
                     loading=false;
                 }
             }
-        }, "Refreshing...", false, e.getProject());
+        }, "EdgeWorkers List", false, e.getProject());
     }
 
     private void addTreeSpeedSearch(Tree tree){
@@ -164,9 +146,13 @@ public class ListEdgeWorkersAction extends AnAction {
         tree.addTreeWillExpandListener(new TreeWillExpandListener() {
             @Override
             public void treeWillExpand(TreeExpansionEvent event) {
+                if(null!=event.getPath()){
+                    tree.setSelectionPath(event.getPath());
+                }
                 ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
                     @Override
                     public void run() {
+                        ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
                         if(null != event.getPath().getParentPath() && event.getPath().getParentPath().toString().equals("["+resourceBundle.getString("listEdgeWorkersToolWindow.panel.title")+"]")){
                             String eid = event.getPath().getLastPathComponent().toString().split("-")[0].trim();
                             try{
@@ -182,10 +168,11 @@ public class ListEdgeWorkersAction extends AnAction {
                                 e.printStackTrace();
                             }
                         }
-                    }}, "Loading...", false, actionEvent.getProject());
+                    }}, "", false, actionEvent.getProject());
             }
             @Override
             public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+                treeWillCollapseRan=true;
                 if(event.getPath().getPathCount()==3){
                     //EdgeWorker version node collapsed
                     String eid = event.getPath().getPath()[1].toString().split("-")[0].strip().trim();
@@ -200,91 +187,110 @@ public class ListEdgeWorkersAction extends AnAction {
                         DefaultMutableTreeNode node = (DefaultMutableTreeNode)event.getPath().getLastPathComponent();
                         node.removeAllChildren();
                     }
+                    tree.setSelectionPath(event.getPath());
                 }
             }
         });
     }
 
-    private void addTreeSelectionListener(Tree tree, EdgeworkerWrapper edgeworkerWrapper, AnActionEvent eve){
-        tree.addTreeSelectionListener(new TreeSelectionListener() {
-            @Override
-            public void valueChanged(TreeSelectionEvent e) {
-                if(null!= e.getNewLeadSelectionPath()){
-                    if(e.getNewLeadSelectionPath().getPathCount()==3){
-                        //EdgeWorker version node selected
-                        String eid = e.getNewLeadSelectionPath().getPath()[1].toString().split("-")[0].strip();
-                        String version = e.getNewLeadSelectionPath().getPath()[2].toString();
-                        DefaultMutableTreeNode versionNode = (DefaultMutableTreeNode) e.getNewLeadSelectionPath().getPath()[2];
-                        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    File tempDirectory = new File(FileUtil.getTempDirectory()+"/tempEdgeWorkersDownload_"+eid+"_"+version);
-                                    //delete all edgeWorker files inside tempEdgeWorkersDownload_ directory and download them again
-                                    if(tempDirectory.exists()){
-                                        for(File file: tempDirectory.listFiles()){
-                                            file.delete();
-                                        }
-                                    }else{
-                                        tempDirectory = FileUtil.createTempDirectory("tempEdgeWorkersDownload_"+eid+"_"+version, "", true);
-                                    }
-                                    versionNode.removeAllChildren();
-                                    Integer exitCode = edgeworkerWrapper.downloadEdgeWorker(eid, version, tempDirectory.getCanonicalPath());
-                                    if(null == exitCode || !exitCode.equals(0)){
-                                        System.out.println("Error in downloading EdgeWorker.");
-                                    }
-                                    if (tempDirectory.listFiles().length == 1) {
-                                        String tgzFileName = tempDirectory.listFiles()[0].getName();
-                                        edgeworkerWrapper.extractTgzFile(tempDirectory.listFiles()[0].getCanonicalPath(), tempDirectory.getCanonicalPath());
+    private void rightMouseButtonClicked(Tree tree, EdgeworkerWrapper edgeworkerWrapper, AnActionEvent e, MouseEvent mouseEvent){
+        if (null != tree.getSelectionModel() && tree.getSelectionModel().getSelectionPath().getPath().length == 3) {
+            String edgeWorkerId = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip();
+            String edgeWorkerVersion = tree.getSelectionModel().getSelectionPath().getPath()[2].toString();
+
+            DownloadEdgeWorkerAction downloadEdgeWorkerAction = (DownloadEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.downloadEdgeWorker.id"));
+            downloadEdgeWorkerAction.setEdgeWorkerId(edgeWorkerId);
+            downloadEdgeWorkerAction.setEdgeWorkerVersion(edgeWorkerVersion);
+
+            ActivateEdgeWorkerAction activateEdgeWorkerAction = (ActivateEdgeWorkerAction) ActionManager.getInstance().getAction(resourceBundle.getString("action.activateEdgeWorker.id"));
+            activateEdgeWorkerAction.setEdgeWorkerId(tree.getSelectionModel().getSelectionPath().getPath()[1].toString());
+            activateEdgeWorkerAction.setEdgeWorkerVersion(edgeWorkerVersion);
+
+            ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+                    resourceBundle.getString("listEdgeWorkersToolWindow.listPopup.title"),
+                    versionsListActionGroup,
+                    e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+            popup.setMinimumSize(new Dimension(240, -1));
+            popup.showInScreenCoordinates(mouseEvent.getComponent(), mouseEvent.getLocationOnScreen());
+        }
+    }
+
+    private void leftMouseButtonClicked(Tree tree, EdgeworkerWrapper edgeworkerWrapper, AnActionEvent anActionEvent, MouseEvent mouseEvent){
+        if(null!=tree.getSelectionModel() && null!=tree.getSelectionModel().getSelectionPath() && tree.isExpanded(tree.getSelectionModel().getSelectionPath())==false){
+            if(tree.getSelectionModel().getSelectionPath().getPathCount()==3){
+                //EdgeWorker version node selected
+                String eid = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip();
+                String version = tree.getSelectionModel().getSelectionPath().getPath()[2].toString();
+                DefaultMutableTreeNode versionNode = (DefaultMutableTreeNode) tree.getSelectionModel().getSelectionPath().getPath()[2];
+                ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
+                            File tempDirectory = new File(FileUtil.getTempDirectory()+"/tempEdgeWorkersDownload_"+eid+"_"+version);
+                            //delete all edgeWorker files inside tempEdgeWorkersDownload_ directory and download them again
+                            if(tempDirectory.exists()){
+                                for(File file: tempDirectory.listFiles()){
+                                    file.delete();
+                                }
+                            }else{
+                                tempDirectory = FileUtil.createTempDirectory("tempEdgeWorkersDownload_"+eid+"_"+version, "", true);
+                            }
+                            versionNode.removeAllChildren();
+                            Integer exitCode = edgeworkerWrapper.downloadEdgeWorker(eid, version, tempDirectory.getCanonicalPath());
+                            if(null == exitCode || !exitCode.equals(0)){
+                                System.out.println("Error in downloading EdgeWorker.");
+                            }
+                            if (tempDirectory.listFiles().length == 1) {
+                                String tgzFileName = tempDirectory.listFiles()[0].getName();
+                                edgeworkerWrapper.extractTgzFile(tempDirectory.listFiles()[0].getCanonicalPath(), tempDirectory.getCanonicalPath());
 //                                           VfsUtil.markDirtyAndRefresh(false, false, true, tempFile);
-                                        for (File file : tempDirectory.listFiles()) {
-                                            if (!file.getName().equals(tgzFileName)) {
-                                                versionNode.add(new DefaultMutableTreeNode(file.getName()));
-                                            }
-                                        }
+                                for (File file : tempDirectory.listFiles()) {
+                                    if (!file.getName().equals(tgzFileName)) {
+                                        versionNode.add(new DefaultMutableTreeNode(file.getName()));
                                     }
-                                } catch (Exception ex) {
-                                    ex.printStackTrace();
                                 }
                             }
-                        },"Loading...", false, eve.getProject());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                },"", false, anActionEvent.getProject());
 
-                    }else if(e.getNewLeadSelectionPath().getPathCount()==4){
-                        String eid = e.getNewLeadSelectionPath().getPath()[1].toString().split("-")[0].strip().trim();
-                        String version = e.getNewLeadSelectionPath().getPath()[2].toString().trim();
-                        String fileName = e.getNewLeadSelectionPath().getPath()[3].toString().trim();
-                        File directory = new File(FileUtil.getTempDirectory()+"/tempEdgeWorkersDownload_"+eid+"_"+version);
-                        if(directory.exists()){
-                            for(File file: directory.listFiles()){
-                                if(file.getName().equals(fileName)){
-                                    VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
-                                    if(null == vf){
-                                        System.out.println("Error in getting VirtualFile from file");
-                                        break;
-                                    }
-                                    Document document = FileDocumentManager.getInstance().getDocument(vf);
-                                    EditorTextField editorTextField = new EditorTextField(document, eve.getProject(), FileTypes.UNKNOWN, true);
-                                    editorTextField.setOneLineMode(false);
-                                    editorTextField.setRequestFocusEnabled(false);
-                                    editorTextField.setPreferredWidth(400);
-                                    document.setReadOnly(true);
-
-                                    DialogBuilder builder = new DialogBuilder(eve.getProject());
-                                    builder.setDimensionServiceKey("TextControl");
-                                    builder.setCenterPanel(editorTextField);
-                                    builder.setPreferredFocusComponent(editorTextField);
-                                    builder.setTitle("EdgeWorker - "+fileName);
-                                    builder.addCloseButton();
-                                    builder.setCenterPanel(new JBScrollPane(editorTextField, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS));
-                                    builder.show();
-                                    break;
-                                }
+            }else if(tree.getSelectionModel().getSelectionPath().getPathCount() == 4){
+                String eid = tree.getSelectionModel().getSelectionPath().getPath()[1].toString().split("-")[0].strip().trim();
+                String version = tree.getSelectionModel().getSelectionPath().getPath()[2].toString().trim();
+                String fileName = tree.getSelectionModel().getSelectionPath().getPath()[3].toString().trim();
+                File directory = new File(FileUtil.getTempDirectory()+"/tempEdgeWorkersDownload_"+eid+"_"+version);
+                if(directory.exists()){
+                    for(File file: directory.listFiles()){
+                        if(file.getName().equals(fileName)){
+                            VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
+                            if(null == vf){
+                                System.out.println("Error in getting VirtualFile from file");
+                                break;
                             }
+                            Document document = FileDocumentManager.getInstance().getDocument(vf);
+                            EditorTextField editorTextField = new EditorTextField(document, anActionEvent.getProject(), FileTypes.UNKNOWN, true);
+                            editorTextField.setOneLineMode(false);
+                            editorTextField.setRequestFocusEnabled(false);
+                            editorTextField.setPreferredWidth(400);
+                            document.setReadOnly(true);
+
+                            DialogBuilder builder = new DialogBuilder(anActionEvent.getProject());
+                            builder.setDimensionServiceKey("TextControl");
+                            builder.setCenterPanel(editorTextField);
+                            builder.setPreferredFocusComponent(editorTextField);
+                            builder.setTitle("EdgeWorker - "+fileName);
+                            builder.addCloseButton();
+                            builder.setCenterPanel(new JBScrollPane(editorTextField, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS));
+                            builder.show();
+                            break;
                         }
                     }
                 }
             }
-        });
+        }
     }
 
     public SimpleToolWindowPanel getPanel() {

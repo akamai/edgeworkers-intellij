@@ -33,7 +33,10 @@ public class SandboxUpdateEdgeWorkerAction extends AnAction {
         PsiFile psiFile =  e.getData(CommonDataKeys.PSI_FILE);
         try {
             EdgeWorkerIdListDropdownInputDialog inputDialog = new EdgeWorkerIdListDropdownInputDialog();
-            String eid = null;
+            String eid = inputDialog.getSelectedItem();
+            if(null==eid){
+                return;
+            }
             if(inputDialog.showAndGet()){
                 //ok button pressed
                 try {

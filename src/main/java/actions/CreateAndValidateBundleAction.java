@@ -46,7 +46,7 @@ public class CreateAndValidateBundleAction extends AnAction {
 
         VirtualFile tarballFileLocation = createAndValidateBundleUI.destinationFolderChooser(event);
         if (null == tarballFileLocation){
-            Messages.showInfoMessage("No folder selected for code bundle location", "Info");
+            Messages.showInfoMessage("No destination folder selected for code bundle location", "Info");
             return;
         }
 
