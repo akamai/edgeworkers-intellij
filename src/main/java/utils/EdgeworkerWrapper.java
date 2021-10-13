@@ -50,6 +50,7 @@ public class EdgeworkerWrapper implements Disposable {
     }
 
     public EdgeworkerWrapper(){
+        resourceBundle = ResourceBundle.getBundle("ActionBundle");
     }
 
     private void setUpToolWindowForConsoleViews(@NotNull Project project){
@@ -66,7 +67,7 @@ public class EdgeworkerWrapper implements Disposable {
         }
     }
 
-    private ConsoleView createConsoleViewOnNewTabOfToolWindow(String title, String description){
+    public ConsoleView createConsoleViewOnNewTabOfToolWindow(String title, String description){
         //create console tab inside tool window
         ContentManager contentManager = toolWindow.getContentManager();
         ContentFactory contentFactory = contentManager.getFactory();
@@ -83,7 +84,7 @@ public class EdgeworkerWrapper implements Disposable {
         return console;
     }
 
-    private String runCommandsInConsoleView(ConsoleView console, ArrayList<GeneralCommandLine> commandLines) throws ExecutionException {
+    public String runCommandsInConsoleView(ConsoleView console, ArrayList<GeneralCommandLine> commandLines) throws ExecutionException {
         StringBuilder errorMsg = new StringBuilder();
         for(GeneralCommandLine cmdLine: commandLines){
             ProcessHandler processHandler = new OSProcessHandler(cmdLine);
@@ -506,7 +507,7 @@ public class EdgeworkerWrapper implements Disposable {
                             }
                         } catch (ExecutionException e) {
                             e.printStackTrace();
-                            Messages.showErrorDialog("EdgeWorker was not updated to the Sandbox!", "Error");
+                            showErrorDialog("EdgeWorker was not updated to the Sandbox!", "Error");
                         }
                     }
                 },"Update EdgeWorker to Sandbox", false, project);
@@ -573,16 +574,20 @@ public class EdgeworkerWrapper implements Disposable {
                 checkAkamaiCLIDialog.show();
             }
             else if(edgeWorkersCliInstalled[0]==false){
-                Messages.showErrorDialog("Please install akamai edgeworkers cli", "Error");
+                showErrorDialog("Please install akamai edgeworkers cli", "Error");
             }else if(sandboxCliInstalled[0]==false){
-                Messages.showErrorDialog("Please install akamai sandbox cli", "Error");
+                showErrorDialog("Please install akamai sandbox cli", "Error");
             }else if(edgercFileExist[0]==false){
-                Messages.showErrorDialog("Please create and setup .edgerc file and configure EdgeWorkers settings at IntelliJ IDEA > Preferences/Settings > EdgeWorkers Configuration", "Error");
+                showErrorDialog("Please create and setup .edgerc file and configure EdgeWorkers settings at IntelliJ IDEA > Preferences/Settings > EdgeWorkers Configuration", "Error");
             }
         }catch (Exception exception){
             exception.printStackTrace();
         }
         return akamaiCliInstalled[0] && edgeWorkersCliInstalled[0] && sandboxCliInstalled[0] && edgercFileExist[0];
+    }
+
+    public void showErrorDialog(String message, String title){
+        Messages.showErrorDialog(message, title);
     }
 
     @Override
