@@ -33,11 +33,11 @@ public class CreateAndValidateBundleAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         Project project = event.getProject();
-        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(project);
+        EdgeworkerWrapper edgeworkerWrapper = getEdgeWorkerWrapper(event);
         if(edgeworkerWrapper.checkIfAkamaiCliInstalled()==false){
             return;
         }
-        CreateAndValidateBundleUI createAndValidateBundleUI = new CreateAndValidateBundleUI();
+        CreateAndValidateBundleUI createAndValidateBundleUI = getCreateAndValidateBundleUI();
         VirtualFile[] filesToBeCompressed = createAndValidateBundleUI.filesChooser(event);
         if (null == filesToBeCompressed || filesToBeCompressed.length==0){
             Messages.showInfoMessage("No file selected for code bundle", "Info");
@@ -61,4 +61,11 @@ public class CreateAndValidateBundleAction extends AnAction {
         }
     }
 
+    public EdgeworkerWrapper getEdgeWorkerWrapper(AnActionEvent event){
+        return new EdgeworkerWrapper(event.getProject());
+    }
+
+    public CreateAndValidateBundleUI getCreateAndValidateBundleUI(){
+        return new CreateAndValidateBundleUI();
+    }
 }
