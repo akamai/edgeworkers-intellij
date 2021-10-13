@@ -1,5 +1,5 @@
 
-EdgeWorkers IntelliJ Plugin - Getting Started
+# EdgeWorkers IntelliJ Plugin - Getting Started
 
 ## Install
 
