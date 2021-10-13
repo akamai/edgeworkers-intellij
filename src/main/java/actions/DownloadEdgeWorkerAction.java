@@ -32,37 +32,17 @@ public class DownloadEdgeWorkerAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(event.getProject());
+        EdgeworkerWrapper edgeworkerWrapper = getEdgeWorkerWrapper(event);
         if(edgeworkerWrapper.checkIfAkamaiCliInstalled()==false){
             return;
         }
-        FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        fileChooserDescriptor.setTitle(resourceBundle.getString("action.downloadEdgeWorker.folderChooser.title"));
-        fileChooserDescriptor.setDescription(resourceBundle.getString("action.downloadEdgeWorker.folderChooser.desc"));
-        fileChooserDescriptor.setShowFileSystemRoots(true);
-        fileChooserDescriptor.setForcedToUseIdeaFileChooser(true);
-        TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
-        textFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(fileChooserDescriptor));
-        VirtualFile[] vfs = FileChooser.chooseFiles(fileChooserDescriptor, event.getProject(), null);
+        FileChooserDescriptor fileChooserDescriptor = getFileChooserDescriptor();
+        addTextFieldWithBrowseButton(fileChooserDescriptor);
+        VirtualFile[] vfs = chooseDownloadPath(fileChooserDescriptor, event);
         if(null==vfs || vfs.length==0){
             return;
         }
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            ProgressManager.getInstance().getProgressIndicator().setText("Downloading...");
-                            Integer exitCode = edgeworkerWrapper.downloadEdgeWorker(edgeWorkerId, edgeWorkerVersion, vfs[0].getCanonicalPath());
-                            VfsUtil.markDirtyAndRefresh(false, false, true, vfs[0]);
-                            if(null == exitCode || !exitCode.equals(0)){
-                                System.out.println("Downloading EdgeWorker failed!");
-                                EdgeWorkerNotification.notifyError(event.getProject(), "Error: Downloading EdgeWorker failed!");
-                            }
-                        }catch (Exception e){
-                            e.printStackTrace();
-                        }
-                    }
-                }, "Download EdgeWorker", false, event.getProject());
+        invokeDownloadEdgeWorkerAction(edgeworkerWrapper,  event, vfs);
     }
 
     @Override
@@ -84,5 +64,50 @@ public class DownloadEdgeWorkerAction extends AnAction {
 
     public void setEdgeWorkerVersion(String edgeWorkerVersion) {
         this.edgeWorkerVersion = edgeWorkerVersion;
+    }
+
+    public EdgeworkerWrapper getEdgeWorkerWrapper(AnActionEvent event){
+        return new EdgeworkerWrapper(event.getProject());
+    }
+
+    public FileChooserDescriptor getFileChooserDescriptor(){
+        FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        fileChooserDescriptor.setTitle(resourceBundle.getString("action.downloadEdgeWorker.folderChooser.title"));
+        fileChooserDescriptor.setDescription(resourceBundle.getString("action.downloadEdgeWorker.folderChooser.desc"));
+        fileChooserDescriptor.setShowFileSystemRoots(true);
+        fileChooserDescriptor.setForcedToUseIdeaFileChooser(true);
+        return fileChooserDescriptor;
+    }
+
+    public void addTextFieldWithBrowseButton(FileChooserDescriptor fileChooserDescriptor){
+        TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
+        textFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(fileChooserDescriptor));
+    }
+
+    public VirtualFile[] chooseDownloadPath(FileChooserDescriptor fileChooserDescriptor, AnActionEvent event){
+        return FileChooser.chooseFiles(fileChooserDescriptor, event.getProject(), null);
+    }
+
+    public void invokeDownloadEdgeWorkerAction(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, VirtualFile[] vfs){
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ProgressManager.getInstance().getProgressIndicator().setText("Downloading...");
+                    Integer exitCode = edgeworkerWrapper.downloadEdgeWorker(edgeWorkerId, edgeWorkerVersion, vfs[0].getCanonicalPath());
+                    VfsUtil.markDirtyAndRefresh(false, false, true, vfs[0]);
+                    if(null == exitCode || !exitCode.equals(0)){
+                        System.out.println("Downloading EdgeWorker failed!");
+                        notifyError(event, "Error: Downloading EdgeWorker failed!");
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }, "Download EdgeWorker", false, event.getProject());
+    }
+
+    public void notifyError(AnActionEvent event, String content){
+        EdgeWorkerNotification.notifyError(event.getProject(), content);
     }
 }

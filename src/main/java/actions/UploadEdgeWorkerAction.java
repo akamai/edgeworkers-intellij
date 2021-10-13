@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,24 +44,15 @@ public class UploadEdgeWorkerAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-        EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper(event.getProject());
+        EdgeworkerWrapper edgeworkerWrapper = getEdgeWorkerWrapper(event);
         if(edgeworkerWrapper.checkIfAkamaiCliInstalled()==false){
             return;
         }
         String bundlePath;
         if(event.isFromActionToolbar()){
             // prompt user to select path to EdgeWorker tgz file
-            FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-            fileChooserDescriptor.setTitle(resourceBundle.getString("action.uploadEdgeWorker.fileChooser.title"));
-            fileChooserDescriptor.setDescription(resourceBundle.getString("action.uploadEdgeWorker.fileChooser.desc"));
-            fileChooserDescriptor.setForcedToUseIdeaFileChooser(true);
-            fileChooserDescriptor.withFileFilter(new Condition<VirtualFile>() {
-                @Override
-                public boolean value(VirtualFile virtualFile) {
-                    return null != virtualFile.getExtension() && virtualFile.getExtension().equals("tgz");
-                }
-            });
-            VirtualFile vfs = FileChooser.chooseFile(fileChooserDescriptor, event.getProject(), null);
+            FileChooserDescriptor fileChooserDescriptor = getFileChooserDescriptor();
+            VirtualFile vfs = chooseEdgeWorkerBundlePath(fileChooserDescriptor, event);
             if(null!=vfs){
                 bundlePath = vfs.getCanonicalPath();
             }else{
@@ -78,7 +70,7 @@ public class UploadEdgeWorkerAction extends AnAction {
         }
 
         // prompt user to enter EdgeWorker ID
-        EdgeWorkerIdListDropdownInputDialog inputDialog = new EdgeWorkerIdListDropdownInputDialog();
+        EdgeWorkerIdListDropdownInputDialog inputDialog = getEdgeWorkerIdListDropdownInputDialog();
         String eid = null;
         try {
             if(null==inputDialog.getSelectedItem()){
@@ -93,7 +85,7 @@ public class UploadEdgeWorkerAction extends AnAction {
                 eid = inputDialog.getSelectedItem();
             }catch (Exception ex){
                 ex.printStackTrace();
-                Messages.showErrorDialog("Invalid EdgeWorker ID selected.", "Error");
+                showErrorDialog("Invalid EdgeWorker ID selected.", "Error");
                 return;
             }
         }else {
@@ -101,26 +93,61 @@ public class UploadEdgeWorkerAction extends AnAction {
             return;
         }
         if(null==eid){
-            Messages.showErrorDialog("EdgeWorker Id can't be null or empty.", "Error");
+            showErrorDialog("EdgeWorker Id can't be null or empty.", "Error");
             return;
         }
 
         try {
             edgeworkerWrapper.uploadEdgeWorker(eid.toString(), bundlePath);
-            //refresh EdgeWorkers list
-            ActionManager actionManager = ActionManager.getInstance();
-            if(null!=actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id"))){
-                ListEdgeWorkersAction listEdgeWorkersAction = (ListEdgeWorkersAction) actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id"));
-                //get data context for listEdgeWorkersAction's refresh button on toolbar
-                DataContext dataContext = DataManager.getInstance().getDataContext(listEdgeWorkersAction.getPanel().getToolbar().getComponent(0));
-                listEdgeWorkersAction.actionPerformed(new AnActionEvent(null,
-                        dataContext,
-                        ActionPlaces.UNKNOWN,
-                        new Presentation(),
-                        ActionManager.getInstance(),0 ));
-            }
+            //refresh EdgeWorkers list in the panel
+            refreshEdgeWorkerList();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public EdgeworkerWrapper getEdgeWorkerWrapper(AnActionEvent event){
+        return new EdgeworkerWrapper(event.getProject());
+    }
+
+    public FileChooserDescriptor getFileChooserDescriptor(){
+        FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+        fileChooserDescriptor.setTitle(resourceBundle.getString("action.uploadEdgeWorker.fileChooser.title"));
+        fileChooserDescriptor.setDescription(resourceBundle.getString("action.uploadEdgeWorker.fileChooser.desc"));
+        fileChooserDescriptor.setForcedToUseIdeaFileChooser(true);
+        fileChooserDescriptor.withFileFilter(new Condition<VirtualFile>() {
+            @Override
+            public boolean value(VirtualFile virtualFile) {
+                return null != virtualFile.getExtension() && virtualFile.getExtension().equals("tgz");
+            }
+        });
+        return fileChooserDescriptor;
+    }
+
+    public VirtualFile chooseEdgeWorkerBundlePath(FileChooserDescriptor fileChooserDescriptor, AnActionEvent event){
+        VirtualFile vfs = FileChooser.chooseFile(fileChooserDescriptor, event.getProject(), null);
+        return vfs;
+    }
+
+    public void refreshEdgeWorkerList(){
+        ActionManager actionManager = ActionManager.getInstance();
+        if(null!=actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id"))){
+            ListEdgeWorkersAction listEdgeWorkersAction = (ListEdgeWorkersAction) actionManager.getAction(resourceBundle.getString("action.listEdgeWorkers.id"));
+            //get data context for listEdgeWorkersAction's refresh button on toolbar
+            DataContext dataContext = DataManager.getInstance().getDataContext(listEdgeWorkersAction.getPanel().getToolbar().getComponent(0));
+            listEdgeWorkersAction.actionPerformed(new AnActionEvent(null,
+                    dataContext,
+                    ActionPlaces.UNKNOWN,
+                    new Presentation(),
+                    ActionManager.getInstance(),0 ));
+        }
+    }
+
+    public EdgeWorkerIdListDropdownInputDialog getEdgeWorkerIdListDropdownInputDialog(){
+        return new EdgeWorkerIdListDropdownInputDialog();
+    }
+
+    public void showErrorDialog(String message, String title){
+        Messages.showErrorDialog(message, title);
     }
 }
