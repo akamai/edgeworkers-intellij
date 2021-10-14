@@ -23,7 +23,8 @@
     
 2.  The EdgeWorkers IntelliJ plugin depends on the Akamai CLI. Many of our customers will already have this set up, but if not on first launch of the EdgeWorkers Explorer pane they will be prompted to install and set up OPEN API credentials in .edgerc [as outlined in the developer docs](https://developer.akamai.com/cli/docs/getting-started). Usage from here assumes you have completed this step.
     
-3.  Additional configuration is available in the IntelliJ Preferences; most customers will not need to use this but if they use multiple .edgerc sections or a custom edgerc path they will, and Akamai internal users will likely need to fill in Account Key here: <img src="https://lh5.googleusercontent.com/-lZtOKjjEfTFWZVRet_zPExUYsAvD0ycGEsyKGQaz0ajDbSCOl-lL3hqsdOYHY_mbNgxIpTgjVT28mZW16E2-4vlcLm5P5trdtX45Oi2kDbT9s43wijePnmnVhd2rCdai0ZchtsI=s0" width="300px">
+3.  Additional configuration is available in the IntelliJ Preferences; most customers will not need to use this but if they use multiple .edgerc sections or a custom edgerc path they will, and Akamai internal users will likely need to fill in Account Key here:
+4.  <img src="https://lh5.googleusercontent.com/-lZtOKjjEfTFWZVRet_zPExUYsAvD0ycGEsyKGQaz0ajDbSCOl-lL3hqsdOYHY_mbNgxIpTgjVT28mZW16E2-4vlcLm5P5trdtX45Oi2kDbT9s43wijePnmnVhd2rCdai0ZchtsI=s0" width="300px">
     
 
 ## Functionality
