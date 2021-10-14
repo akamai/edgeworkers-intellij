@@ -1,5 +1,5 @@
 
-# EdgeWorkers IntelliJ Plugin - Getting Started
+# Akamai EdgeWorkers IntelliJ Plugin
 
 ## Install
 
