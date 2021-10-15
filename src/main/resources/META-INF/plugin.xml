@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.akamai.edgeworkers-intellij</id>
     <name>EdgeWorkers Toolkit</name>
-    <vendor email="devrel-edgeworkers@akamai.com" url="https://developer.akamai.com/developer-tools">Akamai Technologies</vendor>
+    <vendor email="devrel-edgeworkers@akamai.com" url="https://developer.akamai.com/developer-tools">AkamaiTechnologies</vendor>
 
     <description><![CDATA[
     IntelliJ IDE plugin for Akamai EdgeWorkers management.<br>
