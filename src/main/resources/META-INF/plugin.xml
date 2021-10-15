@@ -1,11 +1,10 @@
 <idea-plugin>
-    <id>org.example.edgeworkers-intellij</id>
-    <name>Akamai EdgeWorkers IntelliJ IDEA plugin</name>
-    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">EdgeWorkers</vendor>
+    <id>com.akamai.edgeworkers-intellij</id>
+    <name>EdgeWorkers Toolkit</name>
+    <vendor email="devrel-edgeworkers@akamai.com" url="https://developer.akamai.com/developer-tools">Akamai Technologies</vendor>
 
     <description><![CDATA[
     IntelliJ IDE plugin for Akamai EdgeWorkers management.<br>
-    <em>most HTML tags may be used</em>
     ]]></description>
 
     <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
