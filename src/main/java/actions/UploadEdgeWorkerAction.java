@@ -137,7 +137,7 @@ public class UploadEdgeWorkerAction extends AnAction {
             DataContext dataContext = DataManager.getInstance().getDataContext(listEdgeWorkersAction.getPanel().getToolbar().getComponent(0));
             listEdgeWorkersAction.actionPerformed(new AnActionEvent(null,
                     dataContext,
-                    ActionPlaces.UNKNOWN,
+                    resourceBundle.getString("edgeWorker.panel.toolWindow.toolBar"),
                     new Presentation(),
                     ActionManager.getInstance(),0 ));
         }
