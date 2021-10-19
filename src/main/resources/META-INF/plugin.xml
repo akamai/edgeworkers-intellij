@@ -4,7 +4,8 @@
     <vendor email="devrel-edgeworkers@akamai.com" url="https://developer.akamai.com/developer-tools">AkamaiTechnologies</vendor>
 
     <description><![CDATA[
-    IntelliJ IDE plugin for Akamai EdgeWorkers management.<br>
+    IntelliJ-based IDE plugin for Akamai EdgeWorkers management.<br>
+    This plugin makes the process of creating, registering, uploading, activating, listing, downloading, and testing EdgeWorkers code bundle on the Akamai Edge Network much easier and quicker.
     ]]></description>
 
     <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
