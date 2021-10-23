@@ -55,7 +55,7 @@ public class ListEdgeWorkersToolWindow {
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.uploadEdgeWorker.id")), Constraints.LAST);
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.activateEdgeWorker.id")), Constraints.LAST);
         actionGroup.addAction(actionManager.getAction(resourceBundle.getString("action.registerEdgeWorker.id")), Constraints.LAST);
-        ActionToolbar actionToolbar = actionManager.createActionToolbar("", actionGroup, true);
+        ActionToolbar actionToolbar = actionManager.createActionToolbar(resourceBundle.getString("edgeWorker.panel.toolWindow.toolBar"), actionGroup, true);
         actionToolbar.setTargetComponent(panel);
         panel.setToolbar(actionToolbar.getComponent());
         return panel;
