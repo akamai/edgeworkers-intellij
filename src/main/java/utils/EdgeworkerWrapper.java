@@ -33,8 +33,10 @@ import java.awt.*;
 import java.io.File;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class EdgeworkerWrapper implements Disposable {
@@ -526,6 +528,7 @@ public class EdgeworkerWrapper implements Disposable {
         final boolean[] edgeWorkersCliInstalled = {true};
         final boolean[] sandboxCliInstalled = {true};
         final boolean[] edgercFileExist = {true};
+        suppressCliPrompts();
         try {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
                 @Override
@@ -586,6 +589,32 @@ public class EdgeworkerWrapper implements Disposable {
         return akamaiCliInstalled[0] && edgeWorkersCliInstalled[0] && sandboxCliInstalled[0] && edgercFileExist[0];
     }
 
+    private void suppressCliPrompts(){
+        try{
+            //check if akamai-cli/config file exist
+            File home = new File(System.getProperty("user.home"));
+            File cliConfigFile = new File(Paths.get(home.getAbsolutePath(),"/.akamai-cli/config").toString());
+            if(cliConfigFile.exists()) {
+                String content = Files.readString(cliConfigFile.toPath(), StandardCharsets.US_ASCII);
+                if(content.contains("enable-cli-statistics = false") && content.contains("last-upgrade-check = ignore")){
+                    return;
+                }
+                StringBuilder newContent = new StringBuilder();
+                for(String line: content.split("\n")){
+                    if(line.contains("enable-cli-statistics") || line.contains("last-upgrade-check")){
+                        continue;
+                    }
+                    newContent.append(line+"\n");
+                }
+                newContent.append("enable-cli-statistics = false\n");
+                newContent.append("last-upgrade-check = ignore\n");
+                //overwrite .akamai-cli/config file
+                Files.write(cliConfigFile.toPath(), newContent.toString().getBytes(StandardCharsets.UTF_8),StandardOpenOption.TRUNCATE_EXISTING);
+            }
+        }catch (Exception exception){
+            exception.printStackTrace();
+        }
+    }
     public void showErrorDialog(String message, String title){
         Messages.showErrorDialog(message, title);
     }
