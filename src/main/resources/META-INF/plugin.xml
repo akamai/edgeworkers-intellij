@@ -4,8 +4,20 @@
     <vendor email="devrel-edgeworkers@akamai.com" url="https://developer.akamai.com/developer-tools">AkamaiTechnologies</vendor>
 
     <description><![CDATA[
-    IntelliJ-based IDE plugin for Akamai EdgeWorkers management.<br>
+    <h1>Akamai EdgeWorkers IntelliJ Plugin</h1>
     This plugin makes the process of creating, registering, uploading, activating, listing, downloading, and testing EdgeWorkers code bundle on the Akamai Edge Network much easier and quicker.
+
+
+    <h2 id="dependencies-usage">Dependencies / Usage</h2>
+<ol>
+<li><p>The EdgeWorkers Explorer pane is available by going to View -&gt; Tool Window -&gt; EdgeWorkers Explorer. After selecting this it will appear on the left side of the window.</p>
+</li>
+<li><p>The EdgeWorkers IntelliJ plugin depends on the Akamai CLI. Many of our customers will already have this set up, but if not on first launch of the EdgeWorkers Explorer pane they will be prompted to install and set up OPEN API credentials in .edgerc <a href="https://developer.akamai.com/cli/docs/getting-started">as outlined in the developer docs</a>. Usage from here assumes you have completed this step.</p>
+</li>
+<li><p>Additional configuration is available in the IntelliJ Preferences; most customers will not need to use this but if they use multiple .edgerc sections or a custom edgerc path they will, and Akamai internal users will likely need to fill in Account Key here:</p>
+</li>
+</ol>
+    For more information see the usage guide at: https://github.com/akamai/edgeworkers-intellij
     ]]></description>
 
     <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
