@@ -21,7 +21,7 @@
 
 1.  The EdgeWorkers Explorer pane is available by going to View -> Tool Window -> EdgeWorkers Explorer. After selecting this it will appear on the left side of the window.
     
-2.  The EdgeWorkers VSCode extension depends on the Akamai CLI, minimum version 1.3.0 with EdgeWorkers command minimum version 1.4.1. Many of our customers will already have this set up, but if not on first launch of the EdgeWorkers panel they will be prompted to install and set up OPEN API credentials in .edgerc [as outlined in the developer docs](https://developer.akamai.com/cli/docs/getting-started). Usage from here assumes you have completed this step.
+2.  The EdgeWorkers VSCode extension depends on the Akamai CLI, minimum version 1.3.0 with EdgeWorkers command minimum version 1.4.1. Many of our customers will already have this set up, but if not on first launch of the EdgeWorkers panel they will be prompted to install and set up OPEN API credentials in .edgerc [as outlined in the developer docs](https://developer.akamai.com/cli/docs/getting-started). Usage from here assumes you have completed this step and have met the minimum version requirement.
      
 3.  Additional configuration is available in the IntelliJ Preferences; most customers will not need to use this but if they use multiple .edgerc sections or a custom edgerc path they will, and Akamai internal users will likely need to fill in Account Key here:
 
