@@ -38,7 +38,7 @@ public class ListEdgeWorkersToolWindow {
         //register download and activate EdgeWorker actions before registering listEdgeWorker action
         actionManager.registerAction(resourceBundle.getString("action.downloadEdgeWorker.id"), new DownloadEdgeWorkerAction(resourceBundle.getString("action.downloadEdgeWorker.title"), resourceBundle.getString("action.downloadEdgeWorker.desc"), AllIcons.Actions.Download));
         actionManager.registerAction(resourceBundle.getString("action.activateEdgeWorker.id"), new ActivateEdgeWorkerAction(resourceBundle.getString("action.activateEdgeWorker.title"), resourceBundle.getString("action.activateEdgeWorker.desc"), AllIcons.Actions.Install));
-        actionManager.registerAction(resourceBundle.getString("action.registerEdgeWorker.id"), new RegisterEdgeWorkerAction(resourceBundle.getString("action.registerEdgeWorker.title"), resourceBundle.getString("action.registerEdgeWorker.desc"), AllIcons.Actions.AddMulticaret));
+        actionManager.registerAction(resourceBundle.getString("action.registerEdgeWorker.id"), new RegisterEdgeWorkerAction(resourceBundle.getString("action.registerEdgeWorker.title"), resourceBundle.getString("action.registerEdgeWorker.desc"), AllIcons.Actions.RefactoringBulb));
         actionManager.registerAction(resourceBundle.getString("action.listEdgeWorkers.id"), new ListEdgeWorkersAction(panel));
         actionManager.registerAction(resourceBundle.getString("action.uploadEdgeWorker.id"), new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), AllIcons.Actions.Upload));
     }

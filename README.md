@@ -3,7 +3,7 @@
 
 ## Install
 
-1. Install IntelliJ IDEA: [https://www.jetbrains.com/idea/download/](https://www.jetbrains.com/idea/download/)
+1. Install IntelliJ IDEA: [https://www.jetbrains.com/idea/download/](https://www.jetbrains.com/idea/download/) or WebStorm IDE: [https://www.jetbrains.com/webstorm/](https://www.jetbrains.com/webstorm/)
     
 2.  Create or open a Project
     
