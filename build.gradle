@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.akamai.edgeworkers'
-version '1.0.7'
+version '1.0.8'
 
 repositories {
     mavenCentral()
@@ -19,12 +19,14 @@ dependencies {
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     version = '2021.2'
+    updateSinceUntilBuild = false
 }
+
 patchPluginXml {
     changeNotes = 'Initial release of the plugin.'
     sinceBuild = '212'
-    untilBuild = '221.*'
 }
+
 test {
 //    useJUnitPlatform()
 }
