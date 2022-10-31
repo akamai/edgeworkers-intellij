@@ -152,7 +152,7 @@ public class GetEdgeWorkerProfilingDataDialog extends DialogWrapper {
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
 
-        JBLabel ewNameLabel = new JBLabel("EdgeWorker Name:");
+        JBLabel ewNameLabel = new JBLabel("EdgeWorker URL:");
         JBLabel eventHandlerLabel = new JBLabel("Event Handler:");
         JBLabel filePathLabel = new JBLabel("File Path:");
         JBLabel fileNameLabel = new JBLabel("File Name:");
