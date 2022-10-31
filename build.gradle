@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.4.0'
+    id 'org.jetbrains.intellij' version '1.9.0'
 }
 
 group 'com.akamai.edgeworkers'
@@ -18,7 +18,8 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version = '2021.2'
+    version = '2022.1'
+    type = "IC"
     updateSinceUntilBuild = false
 }
 
@@ -39,4 +40,14 @@ signPlugin {
 
 publishPlugin {
     token = System.getenv("PUBLISH_TOKEN")
+}
+
+runIde {
+    jbrVersion = "11_0_15b2043.56" // JBR for 2022.1
+    // See https://github.com/JetBrains/JetBrainsRuntime#releases-based-on-jdk-11
+}
+
+verifyPluginConfiguration {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
 }
