@@ -17,7 +17,7 @@ public class EdgeworkersActionGroup extends ActionGroup {
                 new UploadEdgeWorkerAction(resourceBundle.getString("action.uploadEdgeWorker.title"), resourceBundle.getString("action.uploadEdgeWorker.desc"), AllIcons.Actions.Upload),
                 new SandboxUpdateEdgeWorkerAction(resourceBundle.getString("action.testEdgeWorkerInSandbox.title"), resourceBundle.getString("action.testEdgeWorkerInSandbox.desc"), AllIcons.General.ExternalTools),
                 new ActivateEdgeWorkerAction(resourceBundle.getString("action.activateEdgeWorker.title"), resourceBundle.getString("action.activateEdgeWorker.desc"), AllIcons.Actions.Install),
-                new RegisterEdgeWorkerAction(resourceBundle.getString("action.registerEdgeWorker.title"), resourceBundle.getString("action.registerEdgeWorker.desc"), AllIcons.Actions.RefactoringBulb)
+                new RegisterEdgeWorkerAction(resourceBundle.getString("action.registerEdgeWorker.title"), resourceBundle.getString("action.registerEdgeWorker.desc"), AllIcons.Actions.RefactoringBulb),
         };
     }
 }

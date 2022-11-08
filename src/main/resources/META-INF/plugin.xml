@@ -28,8 +28,10 @@
         <!-- Add your extensions here -->
         <applicationConfigurable id="EdgeWorkersConfiguration" displayName="EdgeWorkers Configuration"
                                  instance="config.EdgeWorkersConfiguration"/>
-        <applicationService serviceImplementation="config.SettingsService"></applicationService>
-        <toolWindow factoryClass="ui.ListEdgeWorkersToolWindowFactory" id="EdgeWorkers Explorer" anchor="left" secondary="true"></toolWindow>
+        <applicationService serviceImplementation="config.SettingsService"/>
+        <toolWindow factoryClass="ui.ListEdgeWorkersToolWindowFactory" id="EdgeWorkers Explorer" anchor="left"
+                    secondary="true"/>
+        <toolWindow factoryClass="ui.CodeProfilerToolWindowFactory" id="EdgeWorkers Code Profiler" anchor="bottom" icon="AllIcons.Actions.ProfileCPU"/>
         <notificationGroup id="Custom Notification Group" displayType="BALLOON" />
     </extensions>
 
