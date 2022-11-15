@@ -31,6 +31,7 @@ public class CodeProfilerToolWindow {
     private JBHintTextField fileName;
     private DefaultTableModel tableModel;
     private JBTable headersTable;
+    private boolean isLoading;
     private boolean shouldValidate;
     private Border defaultBorder;
     private JBLabel edgeWorkerURLValueErrorLabel;
@@ -41,6 +42,7 @@ public class CodeProfilerToolWindow {
     public CodeProfilerToolWindow() {
         this.resourceBundle = ResourceBundle.getBundle("ActionBundle");
         this.panel = new SimpleToolWindowPanel(false, false);
+        this.isLoading = false;
         this.shouldValidate = false;
         ActionManager actionManager = ActionManager.getInstance();
         if (null != actionManager.getAction(resourceBundle.getString("action.runCodeProfiler.id"))) {
@@ -73,7 +75,7 @@ public class CodeProfilerToolWindow {
         }
     }
 
-    public String[][] getHeaders() {
+    public ArrayList<String[]> getHeaders() {
         ArrayList<String[]> tableData = new ArrayList<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             String[] header = new String[2];
@@ -81,7 +83,15 @@ public class CodeProfilerToolWindow {
             header[1] = (String) tableModel.getValueAt(i, 1);
             tableData.add(header);
         }
-        return tableData.toArray(new String[0][]);
+        return tableData;
+    }
+
+    public boolean getIsLoading() {
+        return isLoading;
+    }
+
+    public void setIsLoading(boolean isLoading) {
+        this.isLoading = isLoading;
     }
 
     private void addRow() {
@@ -263,6 +273,7 @@ public class CodeProfilerToolWindow {
         // Run & Reset Buttons
         JButton runButton = new JButton("Run Profiler");
         runButton.addActionListener(e -> handleRun(runButton));
+        runButton.setEnabled(!isLoading);
         runButton.setDefaultCapable(true);
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener(e -> handleReset());
