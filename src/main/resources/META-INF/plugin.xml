@@ -1,7 +1,9 @@
 <idea-plugin>
     <id>com.akamai.edgeworkers-intellij</id>
     <name>EdgeWorkers Toolkit</name>
-    <vendor email="devrel-edgeworkers@akamai.com" url="https://developer.akamai.com/developer-tools">AkamaiTechnologies</vendor>
+    <vendor email="devrel-edgeworkers@akamai.com" url="https://developer.akamai.com/developer-tools">
+        AkamaiTechnologies
+    </vendor>
 
     <description><![CDATA[
     <h1>Akamai EdgeWorkers IntelliJ Plugin</h1>
@@ -31,8 +33,9 @@
         <applicationService serviceImplementation="config.SettingsService"/>
         <toolWindow factoryClass="ui.ListEdgeWorkersToolWindowFactory" id="EdgeWorkers Explorer" anchor="left"
                     secondary="true"/>
-        <toolWindow factoryClass="ui.CodeProfilerToolWindowFactory" id="EdgeWorkers Code Profiler" anchor="bottom" icon="AllIcons.Actions.ProfileCPU"/>
-        <notificationGroup id="Custom Notification Group" displayType="BALLOON" />
+        <toolWindow factoryClass="ui.CodeProfilerToolWindowFactory" id="EdgeWorkers Code Profiler" anchor="bottom"
+                    icon="AllIcons.Actions.ProfileCPU"/>
+        <notificationGroup id="EdgeWorkers Notification Group" displayType="BALLOON"/>
     </extensions>
 
     <actions>
@@ -43,8 +46,8 @@
         -->
         <group id="EdgeworkersActionGroup" class="EdgeworkersActionGroup"
                popup="true" text="Akamai EdgeWorkers" description="Akamai EdgeWorkers">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="first" />
-            <add-to-group group-id="EditorPopupMenu" anchor="first" />
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </group>
 
     </actions>
