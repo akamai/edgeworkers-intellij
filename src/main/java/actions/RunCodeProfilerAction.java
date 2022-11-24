@@ -3,6 +3,7 @@ package actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.Messages;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -16,15 +17,18 @@ import ui.CodeProfilerToolWindow;
 import ui.EdgeWorkerNotification;
 import utils.DnsService;
 import utils.EdgeworkerWrapper;
+import utils.ZipResourceExtractor;
 
 import javax.net.ssl.HostnameVerifier;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -172,7 +176,7 @@ public class RunCodeProfilerAction extends AnAction {
         HttpClient client;
         HttpGet request;
         HttpResponse response;
-        HttpEntity entity;
+        HttpEntity entity = null;
         String jsonString = "";
         String noEventHandler = "cannot generate code profile for requested event handler. Check EdgeWorker code bundle for implemented event handlers.";
 
@@ -218,35 +222,35 @@ public class RunCodeProfilerAction extends AnAction {
             if (contentType.contains("application/json")) {
                 jsonString = EntityUtils.toString(entity);
             } else if (contentType.contains("multipart/form-data")) {
-                // response provider event handler will return a multipart
-                String boundary = contentType.split("(;\\s+boundary=)")[1];
-                BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
-                StringBuilder sb = new StringBuilder();
-                String line;
+                try (InputStreamReader isr = new InputStreamReader(entity.getContent());
+                     BufferedReader reader = new BufferedReader(isr)) {
+                    // response provider event handler will return a multipart
+                    String boundary = contentType.split("(;\\s+boundary=)")[1];
+                    StringBuilder sb = new StringBuilder();
+                    String line = reader.readLine();
 
-                while (reader.ready()) {
-                    line = reader.readLine();
-                    if (line.contains("content-disposition: form-data; name=\"cpu-profile\"")) {
-                        // the next line is the break between the header and body of the section, let's skip it
-                        reader.readLine();
-                        line = reader.readLine();
+                    while (line != null) {
+                        if (line.contains("content-disposition: form-data; name=\"cpu-profile\"")) {
+                            // the next line is the break between the header and body of the section, let's skip it
+                            reader.readLine();
+                            line = reader.readLine();
 
-                        while (!line.startsWith("--" + boundary) && reader.ready()) {
-                            // loop in the event that profile data is changed to a multi line response in the future
-                            sb.append(line).append(System.getProperty("line.separator"));
+                            while (line != null && !line.startsWith("--" + boundary)) {
+                                // loop in the event that profile data is changed to a multi line response in the future
+                                sb.append(line).append(System.getProperty("line.separator"));
+                                line = reader.readLine();
+                            }
+                            break;
+                        } else {
                             line = reader.readLine();
                         }
-                        break;
                     }
+                    jsonString = sb.toString();
                 }
-                jsonString = sb.toString();
-                reader.close();
             } else if (contentType.contains("text/html")) {
                 // we are getting back the actual website, not the profiling results
                 throw new Exception(noEventHandler);
             }
-
-            EntityUtils.consume(entity);
 
             if (jsonString.startsWith("{\"nodes\"")) {
                 return jsonString;
@@ -256,6 +260,8 @@ public class RunCodeProfilerAction extends AnAction {
         } catch (Exception exception) {
             exception.printStackTrace();
             throw new Exception("Error: Unable to run profiler: " + exception.getMessage());
+        } finally {
+            EntityUtils.consume(entity);
         }
     }
 
@@ -288,6 +294,23 @@ public class RunCodeProfilerAction extends AnAction {
         codeProfiler.setIsLoading(true);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
             try {
+                ProgressManager.getInstance().getProgressIndicator().setText("Initializing...");
+
+                // Extract bundled speedscope if needed
+                File speedScopeFolder = new File(System.getProperty("java.io.tmpdir") + File.separator + "speedscope");
+                if (!speedScopeFolder.exists()) {
+                    try {
+                        ZipResourceExtractor.extractZipResource(
+                                RunCodeProfilerAction.class,
+                                "/speedscope.zip",
+                                Path.of(System.getProperty("java.io.tmpdir"))
+                        );
+                    } catch (IOException exception) {
+                        Messages.showErrorDialog("Error: Unable to extract bundled resources to temp directory.", "Fatal Error");
+                        throw new Exception();
+                    }
+                }
+
                 // Get staging IP
                 ProgressManager.getInstance().getProgressIndicator().setText("Determining staging IP address...");
                 InetAddress stagingIp = getStagingIp(uri.getHost());
