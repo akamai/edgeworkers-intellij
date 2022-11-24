@@ -16,7 +16,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.nio.file.InvalidPathException;
+import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -78,10 +79,14 @@ public class CodeProfilerToolWindow {
     public ArrayList<String[]> getHeaders() {
         ArrayList<String[]> tableData = new ArrayList<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String[] header = new String[2];
-            header[0] = (String) tableModel.getValueAt(i, 0);
-            header[1] = (String) tableModel.getValueAt(i, 1);
-            tableData.add(header);
+            String headerName = (String) tableModel.getValueAt(i, 0);
+            String headerVal = (String) tableModel.getValueAt(i, 1);
+
+            if (headerName.matches(".*:\\s*$")) {
+                // remove trailing colon followed by 0 or more spaces
+                headerName = headerName.split(":\\s*$")[0];
+            }
+            tableData.add(new String[]{headerName, headerVal});
         }
         return tableData;
     }
@@ -107,25 +112,44 @@ public class CodeProfilerToolWindow {
         }
     }
 
-    private boolean validateEdgeWorkerUrlValue() {
-        boolean isValid = !edgeWorkerURLValue.getText().isBlank();
-        edgeWorkerURLValueErrorLabel.setVisible(!isValid);
-        edgeWorkerURLValue.setBorder(isValid ? defaultBorder : BorderFactory.createLineBorder(JBColor.RED));
+    private void setEdgeWorkerURLValueError(String text) {
+        edgeWorkerURLValueErrorLabel.setText(text);
+        edgeWorkerURLValueErrorLabel.setVisible(true);
+        edgeWorkerURLValue.setBorder(BorderFactory.createLineBorder(JBColor.RED));
+    }
 
-        return isValid;
+    private boolean validateEdgeWorkerUrlValue() {
+        if (edgeWorkerURLValue.getText().isBlank()) {
+            setEdgeWorkerURLValueError("The EdgeWorker URL cannot be empty");
+        } else if (!edgeWorkerURLValue.getText().startsWith("http://") && !edgeWorkerURLValue.getText().startsWith("https://")) {
+            setEdgeWorkerURLValueError("The EdgeWorker URL must contain the HTTP protocol");
+        } else {
+            // check if valid URI
+            try {
+                URI uri = new URI(edgeWorkerURLValue.getText()); // throws if violates RFC 2396
+                if (uri.getHost() == null) {
+                    throw new Exception();
+                }
+                edgeWorkerURLValueErrorLabel.setVisible(false);
+                edgeWorkerURLValue.setBorder(defaultBorder);
+                return true;
+            } catch (Exception ex) {
+                setEdgeWorkerURLValueError("The EdgeWorker URL must be a valid URL");
+            }
+        }
+        return false;
     }
 
     private boolean validateFilePath() {
+        boolean exists;
         try {
-            Paths.get(filePath.getText());
-        } catch (InvalidPathException | NullPointerException ex) {
-            filePathErrorLabel.setVisible(true);
-            filePath.setBorder(BorderFactory.createLineBorder(JBColor.RED));
-            return false;
+            exists = Files.exists(Paths.get(filePath.getText()));
+        } catch (Exception ex) {
+            exists = false;
         }
-        filePathErrorLabel.setVisible(false);
-        filePathErrorLabel.setBorder(defaultBorder);
-        return true;
+        filePathErrorLabel.setVisible(!exists);
+        filePath.setBorder(exists ? defaultBorder : BorderFactory.createLineBorder(JBColor.RED));
+        return exists;
     }
 
     private boolean validateHeaders() {
@@ -179,12 +203,12 @@ public class CodeProfilerToolWindow {
         return (validateEdgeWorkerUrlValue() & validateFilePath() & validateHeaders()); // bitwise & to prevent short circuit
     }
 
-    private void handleRun(JButton button) {
+    private void handleRun(Component contextComponent) {
         ActionManager actionManager = ActionManager.getInstance();
         String actionId = resourceBundle.getString("action.runCodeProfiler.id");
         if (validateForm()) {
             shouldValidate = false; // disable continuous validation after successful input
-            actionManager.tryToExecute(actionManager.getAction(actionId), ActionCommand.getInputEvent(actionId), button, "", true);
+            actionManager.tryToExecute(actionManager.getAction(actionId), ActionCommand.getInputEvent(actionId), contextComponent, "", true);
         } else {
             shouldValidate = true;
         }
@@ -225,15 +249,15 @@ public class CodeProfilerToolWindow {
         // Text Fields
         edgeWorkerURLValue = new JBHintTextField("eg: https://www.example.com", JBColor.gray);
         eventHandlerDropdown = new ComboBox<>(new String[]{"onClientRequest", "onOriginRequest", "onOriginResponse", "onClientResponse", "responseProvider"});
-        filePath = new JBHintTextField("eg: /Users/$USERID/Downloads", JBColor.gray);
+        filePath = new JBHintTextField("eg: /Users/myUser/Downloads", JBColor.gray);
         fileName = new JBHintTextField("eg: filename", JBColor.gray);
         defaultBorder = edgeWorkerURLValue.getBorder();
 
         // Error Labels
-        edgeWorkerURLValueErrorLabel = new JBLabel("The EdgeWorker URL cannot be empty");
+        edgeWorkerURLValueErrorLabel = new JBLabel("The EdgeWorker URL must be a valid URL");
         edgeWorkerURLValueErrorLabel.setVisible(false);
         edgeWorkerURLValueErrorLabel.setForeground(JBColor.red);
-        filePathErrorLabel = new JBLabel("The File Path must be a valid path format");
+        filePathErrorLabel = new JBLabel("The File Path is invalid or does not exist");
         filePathErrorLabel.setVisible(false);
         filePathErrorLabel.setForeground(JBColor.red);
         headersTableErrorLabel = new JBLabel("Headers cannot contain null names or values");

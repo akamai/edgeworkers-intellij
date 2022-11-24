@@ -546,7 +546,13 @@ public class EdgeworkerWrapper implements Disposable {
         File tempFile = FileUtil.createTempFile("tempEdgeWorkerAuth", ".json");
         GeneralCommandLine edgeWorkerAuthCmd = getEdgeWorkerAuthCommand(hostname, tempFile.getPath());
         int exitCode = executeCommand(edgeWorkerAuthCmd);
-        return parseEdgeWorkersTempFile("auth", tempFile).get(0).get("msg");
+        ArrayList<Map<String, String>> result = parseEdgeWorkersTempFile("auth", tempFile);
+        if (result.size() == 0) {
+            // parseEdgeWorkersTempFile has already displayed a notification with the error message, just return null
+            return null;
+        } else {
+            return result.get(0).get("msg");
+        }
     }
 
 
