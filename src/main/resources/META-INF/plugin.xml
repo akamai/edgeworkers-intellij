@@ -36,6 +36,7 @@
         <toolWindow factoryClass="ui.CodeProfilerToolWindowFactory" id="EdgeWorkers Code Profiler" anchor="bottom"
                     icon="AllIcons.Actions.ProfileCPU"/>
         <notificationGroup id="EdgeWorkers Notification Group" displayType="BALLOON"/>
+        <fileEditorProvider implementation="ui.ProfileHtmlFileEditorProvider"/>
     </extensions>
 
     <actions>

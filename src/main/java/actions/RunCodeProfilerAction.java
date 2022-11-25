@@ -2,24 +2,37 @@ package actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.jcef.JBCefApp;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ui.CodeProfilerToolWindow;
 import ui.EdgeWorkerNotification;
+import utils.Constants;
 import utils.DnsService;
 import utils.EdgeworkerWrapper;
 import utils.ZipResourceExtractor;
 
-import javax.net.ssl.HostnameVerifier;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -27,11 +40,13 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -181,29 +196,30 @@ public class RunCodeProfilerAction extends AnAction {
         String noEventHandler = "cannot generate code profile for requested event handler. Check EdgeWorker code bundle for implemented event handlers.";
 
         try {
-            // Disable hostname verification since we won't be modifying the hosts file
-            // https://techdocs.akamai.com/api-acceleration/docs/test-stage
-            HostnameVerifier hv = NoopHostnameVerifier.INSTANCE;
+            // Custom DNS resolver to use staging IP
+            DnsResolver dnsResolver = new SystemDefaultDnsResolver() {
+                @Override
+                public InetAddress[] resolve(final String host) {
+                    return new InetAddress[]{stagingIp};
+                }
+            };
 
-            // todo investigate SSL issues in EW-14599
-            // certificate validation doesn't seem to change anything
-            // Allow self-signed certs
-//            TrustStrategy ts = new TrustSelfSignedStrategy();
-//
-//            //Create sslSocketFactory
-//            SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
-//            sslContextBuilder.loadTrustMaterial(null, ts);
-//            SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
-//                    sslContextBuilder.build(),
-//                    hv
-//            );
+            // Create HttpClientConnectionManager to use custom DnsResolver
+            BasicHttpClientConnectionManager connManager = new BasicHttpClientConnectionManager(
+                    RegistryBuilder.<ConnectionSocketFactory>create()
+                            .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                            .register("https", SSLConnectionSocketFactory.getSocketFactory())
+                            .build(),
+                    null, //Default ConnectionFactory
+                    null, //Default SchemePortResolver
+                    dnsResolver  // Custom DnsResolver
+            );
 
-            client = HttpClients.custom()
-                    .setSSLHostnameVerifier(hv)
+            client = HttpClientBuilder.create()
+                    .setConnectionManager(connManager)
                     .build();
 
-            String stagingUri = uri.toString().replace(uri.getHost(), stagingIp.getHostAddress());
-            request = new HttpGet(new URI(stagingUri));
+            request = new HttpGet(uri);
             headers.forEach((x) -> request.addHeader(x[0], x[1]));
 
             response = client.execute(request);
@@ -280,7 +296,35 @@ public class RunCodeProfilerAction extends AnAction {
     }
 
     /**
+     * Convert a cpuprofile formatted string to a speedscope JS & HTML file
+     *
+     * @param fileName            file name to be used for JS file and HTML file
+     * @param cpuProfile          cpuprofile string to convert
+     * @param title               title for speedscope HTML application
+     * @param speedScopeIndexPath path pointing to a speedscope standalone index.html file
+     * @return File: HTML file that can be opened to view the cpu profile using speedscope
+     * @throws IOException Thrown if files cannot be written to disk
+     */
+    private File convertCpuProfile(String fileName, String cpuProfile, String title, String speedScopeIndexPath) throws IOException {
+        String encodedProfile = Base64.getEncoder().encodeToString(cpuProfile.getBytes(StandardCharsets.UTF_8));
+
+        // create strings
+        String jsString = "speedscope.loadFileFromBase64(" + "\"" + title + "\", " + "\"" + encodedProfile + "\"" + ")";
+        String htmlString = "<script>window.location=\"" + "file:///" + speedScopeIndexPath + "#localProfilePath=" + System.getProperty("java.io.tmpdir") + fileName + ".js" + "\"</script>";
+
+        // write strings to disk
+        File htmlFile = FileUtil.createTempFile(fileName, ".html", true);
+        File jsFile = FileUtil.createTempFile(fileName, ".js", true);
+        Files.writeString(jsFile.toPath(), jsString);
+        Files.writeString(htmlFile.toPath(), htmlString);
+
+        // return the html file
+        return htmlFile;
+    }
+
+    /**
      * Creates a new thread and runs the various steps we need to get profiling data from the hostname.
+     * Will then display the results inside the IDE if supported or using the user's default browser.
      *
      * @param edgeworkerWrapper wrapper instance to call CLI with
      * @param event             event which triggered the action
@@ -297,7 +341,8 @@ public class RunCodeProfilerAction extends AnAction {
                 ProgressManager.getInstance().getProgressIndicator().setText("Initializing...");
 
                 // Extract bundled speedscope if needed
-                File speedScopeFolder = new File(System.getProperty("java.io.tmpdir") + File.separator + "speedscope");
+                String speedScopeDir = System.getProperty("java.io.tmpdir") + File.separator + "speedscope";
+                File speedScopeFolder = new File(speedScopeDir);
                 if (!speedScopeFolder.exists()) {
                     try {
                         ZipResourceExtractor.extractZipResource(
@@ -327,7 +372,7 @@ public class RunCodeProfilerAction extends AnAction {
                 // Set headers
                 headers.add(secureTraceTokenHeader);
                 headers.add(new String[]{"x-ew-code-profile-" + eventHandler.toLowerCase(), "on"});
-                headers.add(new String[]{"user-agent", "EdgeWorkers IntelliJ Plugin"});
+                headers.add(new String[]{"user-agent", Constants.EW_USER_AGENT});
 
                 // Add Host header if not already set by the user
                 boolean hostExists = false;
@@ -349,11 +394,28 @@ public class RunCodeProfilerAction extends AnAction {
                 String dest = saveStringToFile(filePath + fileName + ".cpuprofile", jsonString);
                 EdgeWorkerNotification.notifyInfo(event.getProject(), "Successfully downloaded code profile to path: " + dest);
 
-                // Convert profile to html & js
-                // String pathToHtml = edgeworkerWrapper.getEdgeWorkerProfilingHtml(edgeWorkerURL, eventHandler);
-                // bundling speedscope???
-                // render html
+                // Convert to speedscope js & html files
+                String speedScopeIndex = speedScopeDir + File.separator + "index.html";
 
+                File htmlFile;
+                try {
+                    String convertName = Constants.CONVERTED_FILE_NAME + "-" + System.currentTimeMillis();
+                    htmlFile = convertCpuProfile(convertName, jsonString, fileName, speedScopeIndex);
+                } catch (IOException ioException) {
+                    Messages.showErrorDialog("Error: Unable to convert cpuprofile", "Fatal Error");
+                    throw new Exception();
+                }
+
+                // render html
+                if (JBCefApp.isSupported()) {
+                    // load html file using custom file editor
+                    VirtualFile virtualHtmlFile = LocalFileSystem.getInstance().findFileByIoFile(htmlFile);
+                    ApplicationManager.getApplication().invokeLater(() ->
+                            FileEditorManager.getInstance(event.getProject()).openFile(virtualHtmlFile, true));
+                } else {
+                    // open file using default html application
+                    Desktop.getDesktop().open(htmlFile);
+                }
             } catch (Exception exception) {
                 EdgeWorkerNotification.notifyError(null,
                         Objects.requireNonNullElse(exception.getMessage(), "Error: Unable to profile URL " + uri.toString()));

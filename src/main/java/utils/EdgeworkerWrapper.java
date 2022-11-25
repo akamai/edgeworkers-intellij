@@ -555,39 +555,6 @@ public class EdgeworkerWrapper implements Disposable {
         }
     }
 
-
-    // keeping this code from the spike to eventually re-use later
-//    public String getEdgeWorkerProfilingHtml(String url, String eventHandler) throws Exception {
-//        // todo actually fetch the data, for now lets just hardcode it
-//        String profile = "{\"nodes\":[{\"id\":1,\"callFrame\":{\"functionName\":\"(root)\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":0,\"children\":[2,7],\"positionTicks\":[]},{\"id\":2,\"callFrame\":{\"functionName\":\"(rootforrequest1)\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":0,\"children\":[3,4],\"positionTicks\":[]},{\"id\":3,\"callFrame\":{\"functionName\":\"(program)\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":2,\"children\":[],\"positionTicks\":[]},{\"id\":4,\"callFrame\":{\"functionName\":\"responseProvider\",\"scriptId\":\"3\",\"url\":\"main.js\",\"lineNumber\":90,\"columnNumber\":32},\"hitCount\":4,\"children\":[5,6],\"positionTicks\":[{\"line\":102,\"ticks\":2},{\"line\":95,\"ticks\":2}]},{\"id\":5,\"callFrame\":{\"functionName\":\"getHeaders\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":1,\"children\":[],\"positionTicks\":[{\"line\":95,\"ticks\":1}]},{\"id\":6,\"callFrame\":{\"functionName\":\"\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":1,\"children\":[],\"positionTicks\":[{\"line\":102,\"ticks\":1}]},{\"id\":7,\"callFrame\":{\"functionName\":\"(rootforrequest2)\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":0,\"children\":[8,9,22],\"positionTicks\":[]},{\"id\":8,\"callFrame\":{\"functionName\":\"(program)\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":2,\"children\":[],\"positionTicks\":[]},{\"id\":9,\"callFrame\":{\"functionName\":\"\",\"scriptId\":\"3\",\"url\":\"main.js\",\"lineNumber\":101,\"columnNumber\":48},\"hitCount\":1,\"children\":[10,13,14,15,21],\"positionTicks\":[{\"line\":106,\"ticks\":1}]},{\"id\":10,\"callFrame\":{\"functionName\":\"returnInBody\",\"scriptId\":\"3\",\"url\":\"main.js\",\"lineNumber\":78,\"columnNumber\":21},\"hitCount\":1,\"children\":[11],\"positionTicks\":[{\"line\":81,\"ticks\":1}]},{\"id\":11,\"callFrame\":{\"functionName\":\"URLSearchParams\",\"scriptId\":\"5\",\"url\":\"url-search-params\",\"lineNumber\":83,\"columnNumber\":28},\"hitCount\":0,\"children\":[12],\"positionTicks\":[]},{\"id\":12,\"callFrame\":{\"functionName\":\"decode\",\"scriptId\":\"5\",\"url\":\"url-search-params\",\"lineNumber\":145,\"columnNumber\":19},\"hitCount\":1,\"children\":[],\"positionTicks\":[{\"line\":147,\"ticks\":1}]},{\"id\":13,\"callFrame\":{\"functionName\":\"getHeaders\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":1,\"children\":[],\"positionTicks\":[{\"line\":106,\"ticks\":1}]},{\"id\":14,\"callFrame\":{\"functionName\":\"getSafeResponseHeaders\",\"scriptId\":\"3\",\"url\":\"main.js\",\"lineNumber\":119,\"columnNumber\":31},\"hitCount\":1,\"children\":[],\"positionTicks\":[{\"line\":121,\"ticks\":1}]},{\"id\":15,\"callFrame\":{\"functionName\":\"constructResponseBody\",\"scriptId\":\"3\",\"url\":\"main.js\",\"lineNumber\":22,\"columnNumber\":30},\"hitCount\":1,\"children\":[16,17,19],\"positionTicks\":[{\"line\":36,\"ticks\":1}]},{\"id\":16,\"callFrame\":{\"functionName\":\"getHeaders\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":2,\"children\":[],\"positionTicks\":[{\"line\":36,\"ticks\":1},{\"line\":27,\"ticks\":1}]},{\"id\":17,\"callFrame\":{\"functionName\":\"\",\"scriptId\":\"3\",\"url\":\"main.js\",\"lineNumber\":26,\"columnNumber\":44},\"hitCount\":15,\"children\":[18],\"positionTicks\":[{\"line\":28,\"ticks\":15}]},{\"id\":18,\"callFrame\":{\"functionName\":\"getHeaders\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":12,\"children\":[],\"positionTicks\":[{\"line\":28,\"ticks\":12}]},{\"id\":19,\"callFrame\":{\"functionName\":\"\",\"scriptId\":\"3\",\"url\":\"main.js\",\"lineNumber\":35,\"columnNumber\":45},\"hitCount\":8,\"children\":[20],\"positionTicks\":[{\"line\":37,\"ticks\":8}]},{\"id\":20,\"callFrame\":{\"functionName\":\"getHeaders\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":5,\"children\":[],\"positionTicks\":[{\"line\":37,\"ticks\":5}]},{\"id\":21,\"callFrame\":{\"functionName\":\"\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":1,\"children\":[],\"positionTicks\":[{\"line\":107,\"ticks\":1}]},{\"id\":22,\"callFrame\":{\"functionName\":\"\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"hitCount\":1,\"children\":[],\"positionTicks\":[]}],\"startTime\":2711856259701,\"endTime\":2711856270540,\"samples\":[3,3,4,4,5,6,4,4,3,8,8,10,12,13,9,14,16,18,18,17,18,17,17,18,17,18,17,17,17,18,17,18,17,18,17,17,18,17,18,17,17,17,18,18,16,19,20,19,19,19,19,19,20,19,19,20,15,20,20,21,22,8],\"timeDeltas\":[6010,102,63,56,59,59,56,44,84,1266,80,64,59,57,6,59,58,59,21,59,58,56,57,57,58,58,61,58,58,59,58,59,58,57,58,58,58,58,70,57,57,58,58,58,59,59,58,59,58,60,57,58,58,58,58,68,58,59,57,58,59,4]}";
-//
-//        final String tempPath = System.getProperty("java.io.tmpdir");
-//        long currentTime = System.currentTimeMillis();
-//        String fileName = "speedscope-" + currentTime;
-//
-//        String encodedProfile = Base64.getEncoder().encodeToString(profile.getBytes(StandardCharsets.UTF_8));
-//
-//        // create the js file string
-//        String jsString = "speedscope.loadFileFromBase64(" + "\"" + url + "\", " + "\""+ encodedProfile + "\"" + ")";
-//
-//        // create the html file string
-//        String speedScopeIndexPath = "/Users/slukic/Downloads/speedscope-standalone/index.html"; // Todo how can we bundle speedscope with the plugin and use it?
-//        String htmlString = "<script>window.location=\"" + speedScopeIndexPath + "#localProfilePath=" + tempPath + fileName+".js" + "\"</script>";
-//
-//        // write both files to disk
-//        File htmlFile = FileUtil.createTempFile(fileName, ".html", true);
-//        File jsFile = FileUtil.createTempFile(fileName, ".js", true);
-//
-//        Files.writeString(Paths.get(jsFile.toURI()), jsString);
-//        Files.writeString(Paths.get(htmlFile.toURI()), htmlString);
-//
-//        System.out.println("Saved JS to " + jsFile.getPath());
-//        System.out.println("Saved HTML to " + htmlFile.getPath());
-//
-//        //return the path to the html file
-//        return jsFile.toString();
-//    }
-
     public GeneralCommandLine getCLICommandLineByParams(String... params) {
         ArrayList<String> command = new ArrayList<>();
         command.addAll(Arrays.asList(params));
