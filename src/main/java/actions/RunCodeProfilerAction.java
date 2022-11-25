@@ -14,8 +14,14 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +32,6 @@ import utils.DnsService;
 import utils.EdgeworkerWrapper;
 import utils.ZipResourceExtractor;
 
-import javax.net.ssl.HostnameVerifier;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -191,29 +196,30 @@ public class RunCodeProfilerAction extends AnAction {
         String noEventHandler = "cannot generate code profile for requested event handler. Check EdgeWorker code bundle for implemented event handlers.";
 
         try {
-            // Disable hostname verification since we won't be modifying the hosts file
-            // https://techdocs.akamai.com/api-acceleration/docs/test-stage
-            HostnameVerifier hv = NoopHostnameVerifier.INSTANCE;
+            // Custom DNS resolver to use staging IP
+            DnsResolver dnsResolver = new SystemDefaultDnsResolver() {
+                @Override
+                public InetAddress[] resolve(final String host) {
+                    return new InetAddress[]{stagingIp};
+                }
+            };
 
-            // todo investigate SSL issues in EW-14599
-            // certificate validation doesn't seem to change anything
-            // Allow self-signed certs
-//            TrustStrategy ts = new TrustSelfSignedStrategy();
-//
-//            //Create sslSocketFactory
-//            SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
-//            sslContextBuilder.loadTrustMaterial(null, ts);
-//            SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
-//                    sslContextBuilder.build(),
-//                    hv
-//            );
+            // Create HttpClientConnectionManager to use custom DnsResolver
+            BasicHttpClientConnectionManager connManager = new BasicHttpClientConnectionManager(
+                    RegistryBuilder.<ConnectionSocketFactory>create()
+                            .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                            .register("https", SSLConnectionSocketFactory.getSocketFactory())
+                            .build(),
+                    null, //Default ConnectionFactory
+                    null, //Default SchemePortResolver
+                    dnsResolver  // Custom DnsResolver
+            );
 
-            client = HttpClients.custom()
-                    .setSSLHostnameVerifier(hv)
+            client = HttpClientBuilder.create()
+                    .setConnectionManager(connManager)
                     .build();
 
-            String stagingUri = uri.toString().replace(uri.getHost(), stagingIp.getHostAddress());
-            request = new HttpGet(new URI(stagingUri));
+            request = new HttpGet(uri);
             headers.forEach((x) -> request.addHeader(x[0], x[1]));
 
             response = client.execute(request);
