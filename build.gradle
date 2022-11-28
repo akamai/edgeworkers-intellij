@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.9.0'
+    id 'org.jetbrains.intellij' version '1.10.0'
 }
 
 group 'com.akamai.edgeworkers'
-version '1.0.8'
+version '2.0.0'
 
 repositories {
     mavenCentral()
@@ -24,8 +24,8 @@ intellij {
 }
 
 patchPluginXml {
-    changeNotes = 'Initial release of the plugin.'
-    sinceBuild = '212'
+    changeNotes = 'Added code profiler functionality'
+    sinceBuild = '221'
 }
 
 test {
