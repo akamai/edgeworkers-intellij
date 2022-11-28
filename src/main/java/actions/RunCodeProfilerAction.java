@@ -343,7 +343,8 @@ public class RunCodeProfilerAction extends AnAction {
                 // Extract bundled speedscope if needed
                 String speedScopeDir = System.getProperty("java.io.tmpdir") + File.separator + "speedscope";
                 File speedScopeFolder = new File(speedScopeDir);
-                if (!speedScopeFolder.exists()) {
+                String[] fileList = speedScopeFolder.list();
+                if (fileList == null || fileList.length < Constants.SPEEDSCOPE_NUMBER_OF_FILES) {
                     try {
                         ZipResourceExtractor.extractZipResource(
                                 RunCodeProfilerAction.class,
