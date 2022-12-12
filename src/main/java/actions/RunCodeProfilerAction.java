@@ -13,7 +13,7 @@ import com.intellij.ui.jcef.JBCefApp;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.*;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -45,10 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 
 public class RunCodeProfilerAction extends AnAction {
     private final CodeProfilerToolWindow codeProfiler;
@@ -186,14 +183,24 @@ public class RunCodeProfilerAction extends AnAction {
         return new String[]{secureTraceHeader, secureTraceValue};
     }
 
-    private String callCodeProfiler(URI uri, InetAddress stagingIp, ArrayList<String[]> headers) throws Exception {
+    /**
+     * Make a Http request to get profiling information
+     *
+     * @param uri        URI to EdgeWorker
+     * @param httpMethod HTTP method to profile. Must be one of {@link Constants#EW_HTTP_METHODS EW_HTTP_METHODS}.
+     * @param stagingIp  IP address of EdgeWorker on staging network
+     * @param headers    ArrayList containing any headers to send with the request
+     * @return String: String representing the profiling data
+     * @throws Exception Thrown if something goes wrong while making the http call
+     */
+    private String callCodeProfiler(URI uri, String httpMethod, InetAddress stagingIp, ArrayList<String[]> headers) throws Exception {
         System.setProperty("javax.net.debug", "ssl:handshake");
         HttpClient client;
-        HttpGet request;
+        HttpUriRequest request;
         HttpResponse response;
         HttpEntity entity = null;
         String jsonString = "";
-        String noEventHandler = "cannot generate code profile for requested event handler. Check EdgeWorker code bundle for implemented event handlers.";
+        String noEventHandler = "cannot generate code profile for requested event handler or method. Check EdgeWorker code bundle for implemented event handlers.";
 
         try {
             // Custom DNS resolver to use staging IP
@@ -219,7 +226,29 @@ public class RunCodeProfilerAction extends AnAction {
                     .setConnectionManager(connManager)
                     .build();
 
-            request = new HttpGet(uri);
+            switch (httpMethod) {
+                case "GET":
+                    request = new HttpGet(uri);
+                    break;
+                case "HEAD":
+                    request = new HttpHead(uri);
+                    break;
+                case "POST":
+                    request = new HttpPost(uri);
+                    break;
+                case "PUT":
+                    request = new HttpPut(uri);
+                    break;
+                case "PATCH":
+                    request = new HttpPatch(uri);
+                    break;
+                case "DELETE":
+                    request = new HttpDelete(uri);
+                    break;
+                default:
+                    throw new RuntimeException("Invalid http method, must be one of: " + Arrays.toString(Constants.EW_HTTP_METHODS));
+            }
+
             headers.forEach((x) -> request.addHeader(x[0], x[1]));
 
             response = client.execute(request);
@@ -228,9 +257,13 @@ public class RunCodeProfilerAction extends AnAction {
             String contentType;
 
             if (entity == null || entity.getContentType() == null) {
-                // the response is empty
-                // this seems to happen when the edgeWorker runs into a limit while profiling
-                throw new Exception("EdgeWorker took too long to respond.");
+                // the response body is empty, seems to happen when the EdgeWorker runs into a limit while profiling
+                if (httpMethod.equals("HEAD")) {
+                    // not necessarily a timeout, could be just a regular HEAD request that did not return profiling info
+                    throw new Exception(noEventHandler);
+                } else {
+                    throw new Exception("EdgeWorker took too long to respond to profiling request.");
+                }
             } else {
                 contentType = entity.getContentType().getValue();
             }
@@ -334,7 +367,7 @@ public class RunCodeProfilerAction extends AnAction {
      * @param fileName          profiling data file name
      * @param headers           any additional headers to include in the http request
      */
-    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, URI uri, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers) {
+    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, URI uri, String httpMethod, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers) {
         codeProfiler.setIsLoading(true);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
             try {
@@ -389,7 +422,7 @@ public class RunCodeProfilerAction extends AnAction {
 
                 // Make http call
                 ProgressManager.getInstance().getProgressIndicator().setText("Getting profiling data...");
-                String jsonString = callCodeProfiler(uri, stagingIp, headers);
+                String jsonString = callCodeProfiler(uri, httpMethod, stagingIp, headers);
 
                 // Save json string to file
                 String dest = saveStringToFile(filePath + fileName + ".cpuprofile", jsonString);
@@ -434,6 +467,7 @@ public class RunCodeProfilerAction extends AnAction {
         }
         EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper();
         String edgeWorkerURL = codeProfiler.getEdgeWorkerURL();
+        String httpMethod = codeProfiler.getHttpMethod();
         String eventHandler = codeProfiler.getSelectedEventHandler();
         URI uri;
         String filePath = codeProfiler.getFilePath();
@@ -448,7 +482,7 @@ public class RunCodeProfilerAction extends AnAction {
                 filePath = filePath + File.separator;
             }
 
-            profileEdgeWorker(edgeworkerWrapper, e, uri, eventHandler, filePath, fileName, headers);
+            profileEdgeWorker(edgeworkerWrapper, e, uri, httpMethod, eventHandler, filePath, fileName, headers);
         } catch (URISyntaxException ex) {
             // this should never really happen because the UI will validate the input for us
             EdgeWorkerNotification.notifyError(e.getProject(), "Error: EdgeWorker URL is an invalid URL");
