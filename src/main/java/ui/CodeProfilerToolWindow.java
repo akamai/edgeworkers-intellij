@@ -9,6 +9,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import utils.Constants;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -28,6 +29,7 @@ public class CodeProfilerToolWindow {
     private final SimpleToolWindowPanel panel;
     private JBHintTextField edgeWorkerURLValue;
     private ComboBox<String> eventHandlerDropdown;
+    private ComboBox<String> methodDropdown;
     private JBHintTextField filePath;
     private JBHintTextField fileName;
     private DefaultTableModel tableModel;
@@ -58,6 +60,10 @@ public class CodeProfilerToolWindow {
 
     public String getEdgeWorkerURL() {
         return edgeWorkerURLValue.getText();
+    }
+
+    public String getHttpMethod() {
+        return methodDropdown.getItem();
     }
 
     public String getFilePath() {
@@ -247,7 +253,8 @@ public class CodeProfilerToolWindow {
         JBLabel headersLabel = new JBLabel("Request Headers:");
 
         // Text Fields
-        edgeWorkerURLValue = new JBHintTextField("eg: https://www.example.com", JBColor.gray);
+        edgeWorkerURLValue = new JBHintTextField("https://www.example.com", JBColor.gray);
+        methodDropdown = new ComboBox<>(Constants.EW_HTTP_METHODS);
         eventHandlerDropdown = new ComboBox<>(new String[]{"onClientRequest", "onOriginRequest", "onOriginResponse", "onClientResponse", "responseProvider"});
         filePath = new JBHintTextField("eg: /Users/myUser/Downloads", JBColor.gray);
         fileName = new JBHintTextField("eg: filename", JBColor.gray);
@@ -274,13 +281,20 @@ public class CodeProfilerToolWindow {
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
 
-        // Table
+        // Sub Panels
+        // URL + Method Panel
+        JPanel urlMethodPanel = new JPanel(new BorderLayout());
+        urlMethodPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, methodDropdown.getPreferredSize().height));
+        urlMethodPanel.add(methodDropdown, BorderLayout.WEST);
+        urlMethodPanel.add(edgeWorkerURLValue, BorderLayout.CENTER);
+
+        // Table Panel
         tableModel = new DefaultTableModel(new Object[]{"Name", "Value"}, 0);
         headersTable = new JBTable(tableModel);
         JBScrollPane tablePanel = new JBScrollPane(headersTable);
         tablePanel.setMinimumSize(new Dimension(100, 50));
 
-        // Row Buttons
+        // Row Buttons Panel
         JButton deleteButton = new JButton("Delete Selected Headers");
         deleteButton.addActionListener(e -> deleteSelectedRows());
         deleteButton.setEnabled(false); // zero rows exist initially
@@ -294,7 +308,7 @@ public class CodeProfilerToolWindow {
         rowButtonsPanel.add(addButton, BorderLayout.WEST);
         rowButtonsPanel.add(deleteButton, BorderLayout.EAST);
 
-        // Run & Reset Buttons
+        // Submit Buttons Panel
         JButton runButton = new JButton("Run Profiler");
         runButton.addActionListener(e -> handleRun(runButton));
         runButton.setEnabled(!isLoading);
@@ -303,7 +317,7 @@ public class CodeProfilerToolWindow {
         resetButton.addActionListener(e -> handleReset());
 
         JPanel submitPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        submitPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getHeight()));
+        submitPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
         submitPanel.add(resetButton);
         submitPanel.add(runButton);
 
@@ -320,7 +334,7 @@ public class CodeProfilerToolWindow {
                         .addComponent(headersLabel)
                 )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(edgeWorkerURLValue)
+                        .addComponent(urlMethodPanel)
                         .addComponent(eventHandlerDropdown)
                         .addComponent(filePath)
                         .addComponent(fileName)
@@ -332,9 +346,9 @@ public class CodeProfilerToolWindow {
         );
 
         layout.setVerticalGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
                         .addComponent(ewNameLabel)
-                        .addComponent(edgeWorkerURLValue)
+                        .addComponent(urlMethodPanel)
                 )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(eventHandlerLabel)
