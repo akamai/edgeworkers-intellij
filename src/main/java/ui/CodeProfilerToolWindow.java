@@ -223,6 +223,7 @@ public class CodeProfilerToolWindow {
     private void handleReset() {
         shouldValidate = false;
         edgeWorkerURLValue.resetText();
+        methodDropdown.setItem(methodDropdown.getItemAt(0));
         eventHandlerDropdown.setItem(eventHandlerDropdown.getItemAt(0));
         filePath.resetText();
         fileName.resetText();
@@ -246,6 +247,7 @@ public class CodeProfilerToolWindow {
         errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
 
         // Labels
+        JBLabel stagingLabel = new JBLabel("Profile an EdgeWorker deployed to the Akamai staging network");
         JBLabel ewNameLabel = new JBLabel("EdgeWorker URL:");
         JBLabel eventHandlerLabel = new JBLabel("Event Handler:");
         JBLabel filePathLabel = new JBLabel("File Path:");
@@ -325,27 +327,31 @@ public class CodeProfilerToolWindow {
         setupValidationListeners();
 
         // Layout Components
-        layout.setHorizontalGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(ewNameLabel)
-                        .addComponent(eventHandlerLabel)
-                        .addComponent(filePathLabel)
-                        .addComponent(fileNameLabel)
-                        .addComponent(headersLabel)
-                )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(urlMethodPanel)
-                        .addComponent(eventHandlerDropdown)
-                        .addComponent(filePath)
-                        .addComponent(fileName)
-                        .addComponent(tablePanel)
-                        .addComponent(rowButtonsPanel)
-                        .addComponent(errorPanel)
-                        .addComponent(submitPanel)
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(stagingLabel, GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(ewNameLabel)
+                                .addComponent(eventHandlerLabel)
+                                .addComponent(filePathLabel)
+                                .addComponent(fileNameLabel)
+                                .addComponent(headersLabel)
+                        )
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(urlMethodPanel)
+                                .addComponent(eventHandlerDropdown)
+                                .addComponent(filePath)
+                                .addComponent(fileName)
+                                .addComponent(tablePanel)
+                                .addComponent(rowButtonsPanel)
+                                .addComponent(errorPanel)
+                                .addComponent(submitPanel)
+                        )
                 )
         );
 
         layout.setVerticalGroup(layout.createSequentialGroup()
+                .addComponent(stagingLabel)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
                         .addComponent(ewNameLabel)
                         .addComponent(urlMethodPanel)
@@ -366,15 +372,9 @@ public class CodeProfilerToolWindow {
                         .addComponent(headersLabel)
                         .addComponent(tablePanel)
                 )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(rowButtonsPanel)
-                )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(errorPanel)
-                )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(submitPanel)
-                )
+                .addComponent(rowButtonsPanel)
+                .addComponent(errorPanel)
+                .addComponent(submitPanel)
         );
 
         layoutPanel.setLayout(layout);
