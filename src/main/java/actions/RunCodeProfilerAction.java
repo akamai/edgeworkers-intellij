@@ -474,6 +474,9 @@ public class RunCodeProfilerAction extends AnAction {
         String fileName = codeProfiler.getFileName();
         ArrayList<String[]> headers = codeProfiler.getHeaders();
 
+        // Set Headers
+        headers.add(new String[]{Constants.EW_SAMPLING_HEADER, codeProfiler.getSamplingInterval()});
+
         try {
             uri = new URI(edgeWorkerURL);
 
