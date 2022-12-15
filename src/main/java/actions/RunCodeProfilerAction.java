@@ -310,7 +310,7 @@ public class RunCodeProfilerAction extends AnAction {
 
         // create strings
         String jsString = "speedscope.loadFileFromBase64(" + "\"" + title + "\", " + "\"" + encodedProfile + "\"" + ")";
-        String htmlString = "<script>window.location=\"" + "file:///" + speedScopeIndexPath + "#localProfilePath=" + System.getProperty("java.io.tmpdir") + fileName + ".js" + "\"</script>";
+        String htmlString = "<script>window.location=\"" + "file:///" + speedScopeIndexPath + "#localProfilePath=" + Constants.JAVA_TMP_URL + fileName + ".js" + "\"</script>";
 
         // write strings to disk
         File htmlFile = FileUtil.createTempFile(fileName, ".html", true);
@@ -341,7 +341,7 @@ public class RunCodeProfilerAction extends AnAction {
                 ProgressManager.getInstance().getProgressIndicator().setText("Initializing...");
 
                 // Extract bundled speedscope if needed
-                String speedScopeDir = System.getProperty("java.io.tmpdir") + File.separator + "speedscope";
+                String speedScopeDir = Constants.JAVA_TMP_URL + "speedscope";
                 File speedScopeFolder = new File(speedScopeDir);
                 String[] fileList = speedScopeFolder.list();
                 if (fileList == null || fileList.length < Constants.SPEEDSCOPE_NUMBER_OF_FILES) {
@@ -396,7 +396,7 @@ public class RunCodeProfilerAction extends AnAction {
                 EdgeWorkerNotification.notifyInfo(event.getProject(), "Successfully downloaded code profile to path: " + dest);
 
                 // Convert to speedscope js & html files
-                String speedScopeIndex = speedScopeDir + File.separator + "index.html";
+                String speedScopeIndex = speedScopeDir + "/index.html";
 
                 File htmlFile;
                 try {
