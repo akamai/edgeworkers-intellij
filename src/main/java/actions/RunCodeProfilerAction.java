@@ -410,7 +410,10 @@ public class RunCodeProfilerAction extends AnAction {
                 // render html
                 if (JBCefApp.isSupported()) {
                     // load html file using custom file editor
-                    VirtualFile virtualHtmlFile = LocalFileSystem.getInstance().findFileByIoFile(htmlFile);
+                    VirtualFile virtualHtmlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(htmlFile);
+                    if (virtualHtmlFile == null){
+                        throw new Exception("Error: Unable to save profile data. Please try again.");
+                    }
                     ApplicationManager.getApplication().invokeLater(() ->
                             FileEditorManager.getInstance(event.getProject()).openFile(virtualHtmlFile, true));
                 } else {
