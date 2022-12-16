@@ -1,10 +1,12 @@
 package ui;
 
 import actions.RunCodeProfilerAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
+import com.intellij.ui.CollapsiblePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -35,6 +37,7 @@ public class CodeProfilerToolWindow {
     private JBHintTextField fileName;
     private DefaultTableModel tableModel;
     private JBTable headersTable;
+    private JBHintTextField edgeIpOverride;
     private boolean isLoading;
     private boolean shouldValidate;
     private Border defaultBorder;
@@ -105,6 +108,15 @@ public class CodeProfilerToolWindow {
             tableData.add(new String[]{headerName, headerVal});
         }
         return tableData;
+    }
+
+    /**
+     * Get the edge ip override
+     *
+     * @return String containing user inputted edge IP, or null if no IP has been entered
+     */
+    public String getEdgeIpOverride() {
+        return edgeIpOverride.getText().isEmpty() ? null : edgeIpOverride.getText();
     }
 
     public boolean getIsLoading() {
@@ -256,6 +268,7 @@ public class CodeProfilerToolWindow {
     }
 
     private void handleReset() {
+        // clear fields, dropdowns, table
         shouldValidate = false;
         edgeWorkerURLValue.resetText();
         methodDropdown.setItem(methodDropdown.getItemAt(0));
@@ -264,6 +277,7 @@ public class CodeProfilerToolWindow {
         filePath.resetText();
         fileName.resetText();
         tableModel.setRowCount(0);
+        edgeIpOverride.resetText();
 
         // clear errors
         edgeWorkerURLValueErrorLabel.setVisible(false);
@@ -291,6 +305,7 @@ public class CodeProfilerToolWindow {
         JBLabel samplingSizeLabel = new JBLabel("Sampling Interval (μs):");
         JBLabel filePathLabel = new JBLabel("File Path:");
         JBLabel fileNameLabel = new JBLabel("File Name:");
+        JBLabel edgeIpOverrideLabel = new JBLabel("Edge IP Override:");
         JBLabel headersLabel = new JBLabel("Request Headers:");
 
         // Text Fields
@@ -300,6 +315,7 @@ public class CodeProfilerToolWindow {
         samplingInterval = new JBHintTextField("default: " + Constants.EW_DEFAULT_SAMPLING_SIZE + " μs");
         filePath = new JBHintTextField("eg: /Users/myUser/Downloads");
         fileName = new JBHintTextField("eg: filename");
+        edgeIpOverride = new JBHintTextField("Enter edge server IP address", 18);
         defaultBorder = edgeWorkerURLValue.getBorder();
 
         // Error Labels
@@ -354,7 +370,8 @@ public class CodeProfilerToolWindow {
         rowButtonsPanel.add(addButton, BorderLayout.WEST);
         rowButtonsPanel.add(deleteButton, BorderLayout.EAST);
 
-        // Submit Buttons Panel
+        // Bottom Row Panel
+        //      Buttons
         JButton runButton = new JButton("Run Profiler");
         runButton.addActionListener(e -> handleRun(runButton));
         runButton.setEnabled(!isLoading);
@@ -362,10 +379,40 @@ public class CodeProfilerToolWindow {
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener(e -> handleReset());
 
-        JPanel submitPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        submitPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
-        submitPanel.add(resetButton);
-        submitPanel.add(runButton);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
+        buttons.add(resetButton);
+        buttons.add(runButton);
+
+        JPanel submitPanel = new JPanel(new BorderLayout());
+        submitPanel.add(buttons, BorderLayout.SOUTH);
+
+        //      Advanced Section
+        JPanel advancedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        GroupLayout advancedLayout = new GroupLayout(advancedPanel);
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
+        advancedLayout.setHorizontalGroup(advancedLayout.createSequentialGroup()
+                .addGroup(advancedLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(edgeIpOverrideLabel)
+                )
+                .addGroup(advancedLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(edgeIpOverride)
+                )
+        );
+        advancedLayout.setVerticalGroup(advancedLayout.createSequentialGroup()
+                .addGroup(advancedLayout.createParallelGroup()
+                        .addComponent(edgeIpOverrideLabel)
+                        .addComponent(edgeIpOverride)
+                )
+        );
+        CollapsiblePanel collapsibleAdvanced = new CollapsiblePanel(advancedPanel, true, true, AllIcons.Actions.Collapseall, AllIcons.Actions.Expandall, "Advanced");
+
+        //      Panel For the whole row
+        JPanel bottomRow = new JPanel(new BorderLayout());
+        bottomRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, collapsibleAdvanced.getPreferredSize().height));
+        bottomRow.add(collapsibleAdvanced, BorderLayout.CENTER);
+        bottomRow.add(submitPanel, BorderLayout.EAST);
 
         // Listeners
         setupValidationListeners();
@@ -391,7 +438,7 @@ public class CodeProfilerToolWindow {
                                 .addComponent(tablePanel)
                                 .addComponent(rowButtonsPanel)
                                 .addComponent(errorPanel)
-                                .addComponent(submitPanel)
+                                .addComponent(bottomRow)
                         )
                 )
         );
@@ -424,7 +471,7 @@ public class CodeProfilerToolWindow {
                 )
                 .addComponent(rowButtonsPanel)
                 .addComponent(errorPanel)
-                .addComponent(submitPanel)
+                .addComponent(bottomRow)
         );
 
         layoutPanel.setLayout(layout);
