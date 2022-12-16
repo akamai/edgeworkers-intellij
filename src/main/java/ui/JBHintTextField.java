@@ -1,5 +1,6 @@
 package ui;
 
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTextField;
 
 import java.awt.*;
@@ -20,6 +21,7 @@ public class JBHintTextField extends JBTextField implements FocusListener {
      * Create a new JBHintTextField
      *
      * @param hint Hint text to be shown when no input has been entered
+     * @param hintColor Color of the hint text
      */
     public JBHintTextField(String hint, Color hintColor) {
         this.hint = hint;
@@ -27,6 +29,10 @@ public class JBHintTextField extends JBTextField implements FocusListener {
         this.hintColor = hintColor;
         super.addFocusListener(this);
         showHintText();
+    }
+
+    public JBHintTextField(String hint) {
+        this(hint, JBColor.gray);
     }
 
     @Override

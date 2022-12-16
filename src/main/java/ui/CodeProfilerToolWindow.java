@@ -30,6 +30,7 @@ public class CodeProfilerToolWindow {
     private JBHintTextField edgeWorkerURLValue;
     private ComboBox<String> eventHandlerDropdown;
     private ComboBox<String> methodDropdown;
+    private JBHintTextField samplingInterval;
     private JBHintTextField filePath;
     private JBHintTextField fileName;
     private DefaultTableModel tableModel;
@@ -38,6 +39,7 @@ public class CodeProfilerToolWindow {
     private boolean shouldValidate;
     private Border defaultBorder;
     private JBLabel edgeWorkerURLValueErrorLabel;
+    private JBLabel samplingIntervalErrorLabel;
     private JBLabel filePathErrorLabel;
     private JBLabel headersTableErrorLabel;
 
@@ -64,6 +66,14 @@ public class CodeProfilerToolWindow {
 
     public String getHttpMethod() {
         return methodDropdown.getItem();
+    }
+
+    public String getSamplingInterval() {
+        if (!samplingInterval.getText().isBlank()) {
+            return samplingInterval.getText();
+        } else {
+            return Constants.EW_DEFAULT_SAMPLING_SIZE;
+        }
     }
 
     public String getFilePath() {
@@ -125,14 +135,15 @@ public class CodeProfilerToolWindow {
     }
 
     private boolean validateEdgeWorkerUrlValue() {
-        if (edgeWorkerURLValue.getText().isBlank()) {
+        String ewUrl = getEdgeWorkerURL();
+        if (ewUrl.isBlank()) {
             setEdgeWorkerURLValueError("The EdgeWorker URL cannot be empty");
-        } else if (!edgeWorkerURLValue.getText().startsWith("http://") && !edgeWorkerURLValue.getText().startsWith("https://")) {
+        } else if (!ewUrl.startsWith("http://") && !ewUrl.startsWith("https://")) {
             setEdgeWorkerURLValueError("The EdgeWorker URL must contain the HTTP protocol");
         } else {
             // check if valid URI
             try {
-                URI uri = new URI(edgeWorkerURLValue.getText()); // throws if violates RFC 2396
+                URI uri = new URI(ewUrl); // throws if violates RFC 2396
                 if (uri.getHost() == null) {
                     throw new Exception();
                 }
@@ -146,10 +157,22 @@ public class CodeProfilerToolWindow {
         return false;
     }
 
+    private boolean validateSamplingSize() {
+        boolean isValid;
+        try {
+            isValid = Integer.parseInt(getSamplingInterval()) > 0;
+        } catch (NumberFormatException ex) {
+            isValid = false;
+        }
+        samplingIntervalErrorLabel.setVisible(!isValid);
+        samplingInterval.setBorder(isValid ? defaultBorder : BorderFactory.createLineBorder(JBColor.RED));
+        return isValid;
+    }
+
     private boolean validateFilePath() {
         boolean exists;
         try {
-            exists = Files.exists(Paths.get(filePath.getText()));
+            exists = Files.exists(Paths.get(getFilePath()));
         } catch (Exception ex) {
             exists = false;
         }
@@ -187,6 +210,17 @@ public class CodeProfilerToolWindow {
             }
         });
 
+        samplingInterval.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (shouldValidate) validateSamplingSize();
+            }
+        });
+
         filePath.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent focusEvent) {
@@ -206,7 +240,8 @@ public class CodeProfilerToolWindow {
     }
 
     private boolean validateForm() {
-        return (validateEdgeWorkerUrlValue() & validateFilePath() & validateHeaders()); // bitwise & to prevent short circuit
+        // bitwise & to prevent short circuit
+        return (validateEdgeWorkerUrlValue() & validateSamplingSize() & validateFilePath() & validateHeaders());
     }
 
     private void handleRun(Component contextComponent) {
@@ -225,6 +260,7 @@ public class CodeProfilerToolWindow {
         edgeWorkerURLValue.resetText();
         methodDropdown.setItem(methodDropdown.getItemAt(0));
         eventHandlerDropdown.setItem(eventHandlerDropdown.getItemAt(0));
+        samplingInterval.resetText();
         filePath.resetText();
         fileName.resetText();
         tableModel.setRowCount(0);
@@ -232,6 +268,8 @@ public class CodeProfilerToolWindow {
         // clear errors
         edgeWorkerURLValueErrorLabel.setVisible(false);
         edgeWorkerURLValue.setBorder(defaultBorder);
+        samplingIntervalErrorLabel.setVisible(false);
+        samplingInterval.setBorder(defaultBorder);
         filePathErrorLabel.setVisible(false);
         filePath.setBorder(defaultBorder);
         headersTableErrorLabel.setVisible(false);
@@ -250,22 +288,27 @@ public class CodeProfilerToolWindow {
         JBLabel stagingLabel = new JBLabel("Profile an EdgeWorker deployed to the Akamai staging network");
         JBLabel ewNameLabel = new JBLabel("EdgeWorker URL:");
         JBLabel eventHandlerLabel = new JBLabel("Event Handler:");
+        JBLabel samplingSizeLabel = new JBLabel("Sampling Interval (μs):");
         JBLabel filePathLabel = new JBLabel("File Path:");
         JBLabel fileNameLabel = new JBLabel("File Name:");
         JBLabel headersLabel = new JBLabel("Request Headers:");
 
         // Text Fields
-        edgeWorkerURLValue = new JBHintTextField("https://www.example.com", JBColor.gray);
+        edgeWorkerURLValue = new JBHintTextField("https://www.example.com");
         methodDropdown = new ComboBox<>(Constants.EW_HTTP_METHODS);
         eventHandlerDropdown = new ComboBox<>(new String[]{"onClientRequest", "onOriginRequest", "onOriginResponse", "onClientResponse", "responseProvider"});
-        filePath = new JBHintTextField("eg: /Users/myUser/Downloads", JBColor.gray);
-        fileName = new JBHintTextField("eg: filename", JBColor.gray);
+        samplingInterval = new JBHintTextField("default: " + Constants.EW_DEFAULT_SAMPLING_SIZE + " μs");
+        filePath = new JBHintTextField("eg: /Users/myUser/Downloads");
+        fileName = new JBHintTextField("eg: filename");
         defaultBorder = edgeWorkerURLValue.getBorder();
 
         // Error Labels
         edgeWorkerURLValueErrorLabel = new JBLabel("The EdgeWorker URL must be a valid URL");
         edgeWorkerURLValueErrorLabel.setVisible(false);
         edgeWorkerURLValueErrorLabel.setForeground(JBColor.red);
+        samplingIntervalErrorLabel = new JBLabel("The Sampling Interval must be a positive integer");
+        samplingIntervalErrorLabel.setVisible(false);
+        samplingIntervalErrorLabel.setForeground(JBColor.red);
         filePathErrorLabel = new JBLabel("The File Path is invalid or does not exist");
         filePathErrorLabel.setVisible(false);
         filePathErrorLabel.setForeground(JBColor.red);
@@ -273,6 +316,7 @@ public class CodeProfilerToolWindow {
         headersTableErrorLabel.setVisible(false);
         headersTableErrorLabel.setForeground(JBColor.red);
         errorPanel.add(edgeWorkerURLValueErrorLabel);
+        errorPanel.add(samplingIntervalErrorLabel);
         errorPanel.add(filePathErrorLabel);
         errorPanel.add(headersTableErrorLabel);
 
@@ -333,6 +377,7 @@ public class CodeProfilerToolWindow {
                         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                 .addComponent(ewNameLabel)
                                 .addComponent(eventHandlerLabel)
+                                .addComponent(samplingSizeLabel)
                                 .addComponent(filePathLabel)
                                 .addComponent(fileNameLabel)
                                 .addComponent(headersLabel)
@@ -340,6 +385,7 @@ public class CodeProfilerToolWindow {
                         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                 .addComponent(urlMethodPanel)
                                 .addComponent(eventHandlerDropdown)
+                                .addComponent(samplingInterval)
                                 .addComponent(filePath)
                                 .addComponent(fileName)
                                 .addComponent(tablePanel)
@@ -359,6 +405,10 @@ public class CodeProfilerToolWindow {
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(eventHandlerLabel)
                         .addComponent(eventHandlerDropdown)
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(samplingSizeLabel)
+                        .addComponent(samplingInterval)
                 )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(filePathLabel)
