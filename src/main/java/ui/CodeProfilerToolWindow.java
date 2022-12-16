@@ -315,8 +315,7 @@ public class CodeProfilerToolWindow {
         samplingInterval = new JBHintTextField("default: " + Constants.EW_DEFAULT_SAMPLING_SIZE + " μs");
         filePath = new JBHintTextField("eg: /Users/myUser/Downloads");
         fileName = new JBHintTextField("eg: filename");
-        edgeIpOverride = new JBHintTextField("Enter edge server IP address");
-        edgeIpOverride.setMinimumSize(new Dimension(200, 30));
+        edgeIpOverride = new JBHintTextField("Enter edge server IP address", 18);
         defaultBorder = edgeWorkerURLValue.getBorder();
 
         // Error Labels

@@ -12,27 +12,28 @@ import java.awt.event.FocusListener;
  */
 public class JBHintTextField extends JBTextField implements FocusListener {
 
-    private final String hint;
-    private final Color defaultColor;
-    private final Color hintColor;
+    private String hint;
+    private Color defaultColor;
+    private Color hintColor;
     private boolean showingHint;
 
-    /**
-     * Create a new JBHintTextField
-     *
-     * @param hint Hint text to be shown when no input has been entered
-     * @param hintColor Color of the hint text
-     */
-    public JBHintTextField(String hint, Color hintColor) {
-        this.hint = hint;
-        this.defaultColor = super.getForeground();
-        this.hintColor = hintColor;
-        super.addFocusListener(this);
-        showHintText();
+
+    public JBHintTextField(String hint, int columns) {
+        super(columns);
+        init(hint);
     }
 
     public JBHintTextField(String hint) {
-        this(hint, JBColor.gray);
+        super();
+        init(hint);
+    }
+
+    private void init(String hint) {
+        this.hint = hint;
+        this.defaultColor = super.getForeground();
+        this.hintColor = JBColor.gray;
+        super.addFocusListener(this);
+        showHintText();
     }
 
     @Override
@@ -68,7 +69,7 @@ public class JBHintTextField extends JBTextField implements FocusListener {
 
     @Override
     public void setText(String t) {
-        if (t == null || t.isEmpty()){
+        if (t == null || t.isEmpty()) {
             showHintText();
         } else {
             showingHint = false;
