@@ -35,6 +35,7 @@ public class CodeProfilerToolWindow {
     private JBHintTextField fileName;
     private DefaultTableModel tableModel;
     private JBTable headersTable;
+    private String edgeIpOverride;
     private boolean isLoading;
     private boolean shouldValidate;
     private Border defaultBorder;
@@ -105,6 +106,15 @@ public class CodeProfilerToolWindow {
             tableData.add(new String[]{headerName, headerVal});
         }
         return tableData;
+    }
+
+    /**
+     * Get the edge ip override
+     *
+     * @return String containing user inputted edge IP, or null if no IP has been entered
+     */
+    public String getEdgeIpOverride() {
+        return edgeIpOverride;
     }
 
     public boolean getIsLoading() {
@@ -256,6 +266,7 @@ public class CodeProfilerToolWindow {
     }
 
     private void handleReset() {
+        // clear fields, dropdowns, table
         shouldValidate = false;
         edgeWorkerURLValue.resetText();
         methodDropdown.setItem(methodDropdown.getItemAt(0));
@@ -264,6 +275,9 @@ public class CodeProfilerToolWindow {
         filePath.resetText();
         fileName.resetText();
         tableModel.setRowCount(0);
+
+        //clear advanced settings
+        edgeIpOverride = null;
 
         // clear errors
         edgeWorkerURLValueErrorLabel.setVisible(false);
@@ -274,6 +288,17 @@ public class CodeProfilerToolWindow {
         filePath.setBorder(defaultBorder);
         headersTableErrorLabel.setVisible(false);
         headersTable.setBorder(defaultBorder);
+    }
+
+    private void handleAdvanced() {
+        CodeProfilerAdvancedDialog dialog = new CodeProfilerAdvancedDialog(edgeIpOverride);
+        if (dialog.showAndGet()) { // ok button clicked
+            if (dialog.getEdgeIp().isEmpty()) {
+                edgeIpOverride = null;
+            } else {
+                edgeIpOverride = dialog.getEdgeIp();
+            }
+        }
     }
 
     public JPanel getContent() {
@@ -354,18 +379,29 @@ public class CodeProfilerToolWindow {
         rowButtonsPanel.add(addButton, BorderLayout.WEST);
         rowButtonsPanel.add(deleteButton, BorderLayout.EAST);
 
-        // Submit Buttons Panel
+        // Bottom Row Panel
         JButton runButton = new JButton("Run Profiler");
         runButton.addActionListener(e -> handleRun(runButton));
         runButton.setEnabled(!isLoading);
         runButton.setDefaultCapable(true);
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener(e -> handleReset());
+        JButton advancedButton = new JButton("Advanced Options");
+        advancedButton.addActionListener(e -> handleAdvanced());
 
-        JPanel submitPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        submitPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
-        submitPanel.add(resetButton);
-        submitPanel.add(runButton);
+        JPanel rightSubmit = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        rightSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
+        rightSubmit.add(resetButton);
+        rightSubmit.add(runButton);
+
+        JPanel leftSubmit = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        leftSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, advancedButton.getPreferredSize().height));
+        leftSubmit.add(advancedButton);
+
+        JPanel bottomRow = new JPanel(new BorderLayout());
+        bottomRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
+        bottomRow.add(leftSubmit, BorderLayout.WEST);
+        bottomRow.add(rightSubmit, BorderLayout.EAST);
 
         // Listeners
         setupValidationListeners();
@@ -391,7 +427,7 @@ public class CodeProfilerToolWindow {
                                 .addComponent(tablePanel)
                                 .addComponent(rowButtonsPanel)
                                 .addComponent(errorPanel)
-                                .addComponent(submitPanel)
+                                .addComponent(bottomRow)
                         )
                 )
         );
@@ -424,7 +460,7 @@ public class CodeProfilerToolWindow {
                 )
                 .addComponent(rowButtonsPanel)
                 .addComponent(errorPanel)
-                .addComponent(submitPanel)
+                .addComponent(bottomRow)
         );
 
         layoutPanel.setLayout(layout);

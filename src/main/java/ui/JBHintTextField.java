@@ -66,6 +66,17 @@ public class JBHintTextField extends JBTextField implements FocusListener {
         return showingHint ? "" : super.getText();
     }
 
+    @Override
+    public void setText(String t) {
+        if (t == null || t.isEmpty()){
+            showHintText();
+        } else {
+            showingHint = false;
+            super.setText(t);
+            super.setForeground(defaultColor);
+        }
+    }
+
     public void resetText() {
         showHintText();
     }

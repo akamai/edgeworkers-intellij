@@ -40,6 +40,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -362,12 +363,15 @@ public class RunCodeProfilerAction extends AnAction {
      * @param edgeworkerWrapper wrapper instance to call CLI with
      * @param event             event which triggered the action
      * @param uri               uri to EdgeWorker
+     * @param httpMethod        what Http method to use
      * @param eventHandler      event handler to profile
      * @param filePath          profiling data directory
      * @param fileName          profiling data file name
      * @param headers           any additional headers to include in the http request
+     * @param edgeIpOverride    IP address that can be used to override the IP lookup for the EdgeWorkers staging server.
+     *                          Will automatically determine IP address if null.
      */
-    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, URI uri, String httpMethod, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers) {
+    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, URI uri, String httpMethod, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers, @Nullable InetAddress edgeIpOverride) {
         codeProfiler.setIsLoading(true);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
             try {
@@ -392,7 +396,13 @@ public class RunCodeProfilerAction extends AnAction {
 
                 // Get staging IP
                 ProgressManager.getInstance().getProgressIndicator().setText("Determining staging IP address...");
-                InetAddress stagingIp = getStagingIp(uri.getHost());
+                InetAddress stagingIp;
+                if (edgeIpOverride == null) {
+                    stagingIp = getStagingIp(uri.getHost());
+                } else {
+                    stagingIp = edgeIpOverride;
+                }
+
 
                 // Get secure trace headers
                 ProgressManager.getInstance().getProgressIndicator().setText("Generating secure trace header...");
@@ -444,7 +454,7 @@ public class RunCodeProfilerAction extends AnAction {
                 if (JBCefApp.isSupported()) {
                     // load html file using custom file editor
                     VirtualFile virtualHtmlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(htmlFile);
-                    if (virtualHtmlFile == null){
+                    if (virtualHtmlFile == null) {
                         throw new Exception("Error: Unable to save profile data. Please try again.");
                     }
                     ApplicationManager.getApplication().invokeLater(() ->
@@ -476,6 +486,7 @@ public class RunCodeProfilerAction extends AnAction {
         String filePath = codeProfiler.getFilePath();
         String fileName = codeProfiler.getFileName();
         ArrayList<String[]> headers = codeProfiler.getHeaders();
+        InetAddress edgeIpOverride;
 
         // Set Headers
         headers.add(new String[]{Constants.EW_SAMPLING_HEADER, codeProfiler.getSamplingInterval()});
@@ -483,15 +494,24 @@ public class RunCodeProfilerAction extends AnAction {
         try {
             uri = new URI(edgeWorkerURL);
 
+            if (codeProfiler.getEdgeIpOverride() != null) {
+                edgeIpOverride = InetAddress.getByName(codeProfiler.getEdgeIpOverride());
+            } else {
+                edgeIpOverride = null;
+            }
+
             // append trailing separator to path if it's missing
             if (!filePath.endsWith(File.separator)) {
                 filePath = filePath + File.separator;
             }
 
-            profileEdgeWorker(edgeworkerWrapper, e, uri, httpMethod, eventHandler, filePath, fileName, headers);
+            profileEdgeWorker(edgeworkerWrapper, e, uri, httpMethod, eventHandler, filePath, fileName, headers, edgeIpOverride);
         } catch (URISyntaxException ex) {
-            // this should never really happen because the UI will validate the input for us
+            // these catch statements should never be reached because the UI will validate the input for us,
+            // but are needed since this method is not throwable
             EdgeWorkerNotification.notifyError(e.getProject(), "Error: EdgeWorker URL is an invalid URL");
+        } catch (UnknownHostException ex) {
+            EdgeWorkerNotification.notifyError(e.getProject(), "Error: Edge IP override is an invalid IP");
         }
     }
 
