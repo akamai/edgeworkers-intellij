@@ -1,10 +1,12 @@
 package ui;
 
 import actions.RunCodeProfilerAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
+import com.intellij.ui.CollapsiblePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -35,7 +37,7 @@ public class CodeProfilerToolWindow {
     private JBHintTextField fileName;
     private DefaultTableModel tableModel;
     private JBTable headersTable;
-    private String edgeIpOverride;
+    private JBHintTextField edgeIpOverride;
     private boolean isLoading;
     private boolean shouldValidate;
     private Border defaultBorder;
@@ -114,7 +116,7 @@ public class CodeProfilerToolWindow {
      * @return String containing user inputted edge IP, or null if no IP has been entered
      */
     public String getEdgeIpOverride() {
-        return edgeIpOverride;
+        return edgeIpOverride.getText().isEmpty() ? null : edgeIpOverride.getText();
     }
 
     public boolean getIsLoading() {
@@ -275,9 +277,7 @@ public class CodeProfilerToolWindow {
         filePath.resetText();
         fileName.resetText();
         tableModel.setRowCount(0);
-
-        //clear advanced settings
-        edgeIpOverride = null;
+        edgeIpOverride.resetText();
 
         // clear errors
         edgeWorkerURLValueErrorLabel.setVisible(false);
@@ -288,17 +288,6 @@ public class CodeProfilerToolWindow {
         filePath.setBorder(defaultBorder);
         headersTableErrorLabel.setVisible(false);
         headersTable.setBorder(defaultBorder);
-    }
-
-    private void handleAdvanced() {
-        CodeProfilerAdvancedDialog dialog = new CodeProfilerAdvancedDialog(edgeIpOverride);
-        if (dialog.showAndGet()) { // ok button clicked
-            if (dialog.getEdgeIp().isEmpty()) {
-                edgeIpOverride = null;
-            } else {
-                edgeIpOverride = dialog.getEdgeIp();
-            }
-        }
     }
 
     public JPanel getContent() {
@@ -316,6 +305,7 @@ public class CodeProfilerToolWindow {
         JBLabel samplingSizeLabel = new JBLabel("Sampling Interval (μs):");
         JBLabel filePathLabel = new JBLabel("File Path:");
         JBLabel fileNameLabel = new JBLabel("File Name:");
+        JBLabel edgeIpOverrideLabel = new JBLabel("Edge IP Override:");
         JBLabel headersLabel = new JBLabel("Request Headers:");
 
         // Text Fields
@@ -325,6 +315,8 @@ public class CodeProfilerToolWindow {
         samplingInterval = new JBHintTextField("default: " + Constants.EW_DEFAULT_SAMPLING_SIZE + " μs");
         filePath = new JBHintTextField("eg: /Users/myUser/Downloads");
         fileName = new JBHintTextField("eg: filename");
+        edgeIpOverride = new JBHintTextField("Enter edge server IP address");
+        edgeIpOverride.setMinimumSize(new Dimension(200, 30));
         defaultBorder = edgeWorkerURLValue.getBorder();
 
         // Error Labels
@@ -380,28 +372,48 @@ public class CodeProfilerToolWindow {
         rowButtonsPanel.add(deleteButton, BorderLayout.EAST);
 
         // Bottom Row Panel
+        //      Buttons
         JButton runButton = new JButton("Run Profiler");
         runButton.addActionListener(e -> handleRun(runButton));
         runButton.setEnabled(!isLoading);
         runButton.setDefaultCapable(true);
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener(e -> handleReset());
-        JButton advancedButton = new JButton("Advanced Options");
-        advancedButton.addActionListener(e -> handleAdvanced());
 
-        JPanel rightSubmit = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        rightSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
-        rightSubmit.add(resetButton);
-        rightSubmit.add(runButton);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
+        buttons.add(resetButton);
+        buttons.add(runButton);
 
-        JPanel leftSubmit = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        leftSubmit.setMaximumSize(new Dimension(Integer.MAX_VALUE, advancedButton.getPreferredSize().height));
-        leftSubmit.add(advancedButton);
+        JPanel submitPanel = new JPanel(new BorderLayout());
+        submitPanel.add(buttons, BorderLayout.SOUTH);
 
+        //      Advanced Section
+        JPanel advancedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        GroupLayout advancedLayout = new GroupLayout(advancedPanel);
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
+        advancedLayout.setHorizontalGroup(advancedLayout.createSequentialGroup()
+                .addGroup(advancedLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(edgeIpOverrideLabel)
+                )
+                .addGroup(advancedLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(edgeIpOverride)
+                )
+        );
+        advancedLayout.setVerticalGroup(advancedLayout.createSequentialGroup()
+                .addGroup(advancedLayout.createParallelGroup()
+                        .addComponent(edgeIpOverrideLabel)
+                        .addComponent(edgeIpOverride)
+                )
+        );
+        CollapsiblePanel collapsibleAdvanced = new CollapsiblePanel(advancedPanel, true, true, AllIcons.Actions.Collapseall, AllIcons.Actions.Expandall, "Advanced");
+
+        //      Panel For the whole row
         JPanel bottomRow = new JPanel(new BorderLayout());
-        bottomRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
-        bottomRow.add(leftSubmit, BorderLayout.WEST);
-        bottomRow.add(rightSubmit, BorderLayout.EAST);
+        bottomRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, collapsibleAdvanced.getPreferredSize().height));
+        bottomRow.add(collapsibleAdvanced, BorderLayout.CENTER);
+        bottomRow.add(submitPanel, BorderLayout.EAST);
 
         // Listeners
         setupValidationListeners();

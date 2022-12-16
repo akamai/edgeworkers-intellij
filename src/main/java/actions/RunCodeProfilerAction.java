@@ -507,11 +507,10 @@ public class RunCodeProfilerAction extends AnAction {
 
             profileEdgeWorker(edgeworkerWrapper, e, uri, httpMethod, eventHandler, filePath, fileName, headers, edgeIpOverride);
         } catch (URISyntaxException ex) {
-            // these catch statements should never be reached because the UI will validate the input for us,
-            // but are needed since this method is not throwable
+            // this should never really happen because the UI will validate the URL for us
             EdgeWorkerNotification.notifyError(e.getProject(), "Error: EdgeWorker URL is an invalid URL");
         } catch (UnknownHostException ex) {
-            EdgeWorkerNotification.notifyError(e.getProject(), "Error: Edge IP override is an invalid IP");
+            EdgeWorkerNotification.notifyError(e.getProject(), "Error: Edge IP override is not a valid IP address");
         }
     }
 
