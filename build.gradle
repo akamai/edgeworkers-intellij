@@ -18,14 +18,14 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version = '2022.1'
+    version = '2022.2'
     type = "IC"
     updateSinceUntilBuild = false
 }
 
 patchPluginXml {
     changeNotes = 'Added code profiler functionality'
-    sinceBuild = '221'
+    sinceBuild = '222'
 }
 
 test {
@@ -43,11 +43,11 @@ publishPlugin {
 }
 
 runIde {
-    jbrVersion = "11_0_15b2043.56" // JBR for 2022.1
+    //jbrVersion = "11_0_15b2043.56" // JBR for 2022.1
     // See https://github.com/JetBrains/JetBrainsRuntime#releases-based-on-jdk-11
 }
 
 verifyPluginConfiguration {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
 }

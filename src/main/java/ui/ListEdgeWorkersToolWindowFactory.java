@@ -20,13 +20,13 @@ public class ListEdgeWorkersToolWindowFactory implements ToolWindowFactory {
     }
 
     @Override
-    public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow){
+    public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         ListEdgeWorkersToolWindow listEdgeWorkersToolWindow = new ListEdgeWorkersToolWindow();
-        ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+        ContentFactory contentFactory = ContentFactory.getInstance();
         try {
             Content content = contentFactory.createContent(listEdgeWorkersToolWindow.getContent(), "", false);
             toolWindow.getContentManager().addContent(content);
-        }catch (Exception  e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

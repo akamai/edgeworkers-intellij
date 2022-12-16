@@ -13,7 +13,7 @@ public class CodeProfilerToolWindowFactory implements ToolWindowFactory {
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         CodeProfilerToolWindow codeProfilerToolWindow = new CodeProfilerToolWindow();
-        ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+        ContentFactory contentFactory = ContentFactory.getInstance();
         try {
             Content content = contentFactory.createContent(codeProfilerToolWindow.getContent(), "", false);
             toolWindow.getContentManager().addContent(content);
