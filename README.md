@@ -76,4 +76,4 @@
 
 <img src="https://lh5.googleusercontent.com/TpmaNZs4hQlfe9jbkfll7Dr94aeFcempR_AchBOVCdb62-sTsZKRlb8MU9tUEvFRvBgH4-4F0juaHQKL4cupkihrIDaZB-VV3i5xG9Uc6Eh5rlOHgBSqT3Gokn_LhiNY2MkVU_4L=s0" width="300px">
 
-11. Code profiling is available by bringing up the bottom panel. More info on profiling code with the EdgeWorkers Toolkit for VSCode, check out [Akamai Techdocs page on the EdgeWorkers Code Profiler](https://techdocs.akamai.com/edgeworkers/docs/edgeworkers-code-profiler).
+11. Code profiling is available by bringing up the bottom panel. More info on profiling code with the EdgeWorkers Toolkit for IntelliJ, check out [Akamai Techdocs page on the EdgeWorkers Code Profiler](https://techdocs.akamai.com/edgeworkers/docs/edgeworkers-code-profiler).
