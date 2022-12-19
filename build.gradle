@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.10.1'
+    id 'org.jetbrains.intellij' version '1.11.0'
 }
 
 group 'com.akamai.edgeworkers'
-version '2.0.0'
+version '2.1.0'
 
 repositories {
     mavenCentral()
@@ -24,7 +24,7 @@ intellij {
 }
 
 patchPluginXml {
-    changeNotes = 'Added code profiler functionality'
+    changeNotes = 'Added memory profiling support & more profiling options'
     sinceBuild = '221'
 }
 
