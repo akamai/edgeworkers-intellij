@@ -32,6 +32,7 @@ import utils.DnsService;
 import utils.EdgeworkerWrapper;
 import utils.ZipResourceExtractor;
 
+import javax.naming.NamingException;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -89,11 +90,11 @@ public class RunCodeProfilerAction extends AnAction {
     }
 
     /**
-     * @param hostname String: hostname used to get staging IP address from
-     * @return InetAddress: IP address of the staging hostname
-     * @throws Exception thrown if we cannot get the staging IP address from the hostname
+     * @param hostname String: EdgeWorker hostname
+     * @return String: Staging hostname for given EdgeWorker
+     * @throws NamingException: Thrown if we cannot determine the EdgeWorker's CNAME using the system DNS
      */
-    private InetAddress getStagingIp(String hostname) throws Exception {
+    private String getStagingName(String hostname) throws NamingException {
         // Check if local url
         String[] localAddresses = new String[]{
                 "127.0.0.1",
@@ -102,7 +103,7 @@ public class RunCodeProfilerAction extends AnAction {
         };
         for (String address : localAddresses) {
             if (hostname.equals(address)) {
-                return InetAddress.getLoopbackAddress();
+                return InetAddress.getLoopbackAddress().getHostName();
             }
         }
 
@@ -133,21 +134,17 @@ public class RunCodeProfilerAction extends AnAction {
             try {
                 cname = DnsService.getCNAME(hostname)[0];
             } catch (Exception exception) {
-                throw new Exception("Error: Unable to resolve CNAME for hostname: " + hostname);
+                throw new NamingException("Error: Unable to resolve CNAME for hostname: " + hostname);
             }
         }
 
         // Get staging IP
-        try {
-            String beginning = cname.substring(0, cname.indexOf(".net"));
-            if (!beginning.endsWith("-staging")) {
-                // get staging cname if needed
-                cname = beginning + "-staging.net";
-            }
-            return InetAddress.getByName(cname);
-        } catch (Exception exception) {
-            throw new Exception("Error: Unable to get staging IP address for hostname : " + hostname);
+        String beginning = cname.substring(0, cname.indexOf(".net"));
+        if (!beginning.endsWith("-staging")) {
+            // get staging cname if needed
+            cname = beginning + "-staging.net";
         }
+        return cname;
     }
 
     /**
@@ -263,7 +260,7 @@ public class RunCodeProfilerAction extends AnAction {
                     // not necessarily a timeout, could be just a regular HEAD request that did not return profiling info
                     throw new Exception(noEventHandler);
                 } else {
-                    throw new Exception("EdgeWorker took too long to respond to profiling request.");
+                    throw new Exception("Received null response body or EdgeWorker took too long to respond.");
                 }
             } else {
                 contentType = entity.getContentType().getValue();
@@ -280,7 +277,8 @@ public class RunCodeProfilerAction extends AnAction {
                     String line = reader.readLine();
 
                     while (line != null) {
-                        if (line.contains("content-disposition: form-data; name=\"cpu-profile\"")) {
+                        if (line.contains("content-disposition: form-data; name=\"cpu-profile\"") ||
+                                line.contains("content-disposition: form-data; name=\"memory-profile\"")) {
                             // the next line is the break between the header and body of the section, let's skip it
                             reader.readLine();
                             line = reader.readLine();
@@ -302,7 +300,7 @@ public class RunCodeProfilerAction extends AnAction {
                 throw new Exception(noEventHandler);
             }
 
-            if (jsonString.startsWith("{\"nodes\"")) {
+            if (jsonString.startsWith("{\"nodes\"") || jsonString.startsWith("{\"head\"")) {
                 return jsonString;
             } else {
                 throw new Exception(noEventHandler);
@@ -330,17 +328,17 @@ public class RunCodeProfilerAction extends AnAction {
     }
 
     /**
-     * Convert a cpuprofile formatted string to a speedscope JS & HTML file
+     * Convert a cpuprofile or heapprofile formatted string to a speedscope JS & HTML file
      *
      * @param fileName            file name to be used for JS file and HTML file
-     * @param cpuProfile          cpuprofile string to convert
+     * @param profileData         String representing data to convert
      * @param title               title for speedscope HTML application
      * @param speedScopeIndexPath path pointing to a speedscope standalone index.html file
-     * @return File: HTML file that can be opened to view the cpu profile using speedscope
+     * @return File: HTML file that can be opened to view the profile data using speedscope
      * @throws IOException Thrown if files cannot be written to disk
      */
-    private File convertCpuProfile(String fileName, String cpuProfile, String title, String speedScopeIndexPath) throws IOException {
-        String encodedProfile = Base64.getEncoder().encodeToString(cpuProfile.getBytes(StandardCharsets.UTF_8));
+    private File convertCodeProfile(String fileName, String profileData, String title, String speedScopeIndexPath) throws IOException {
+        String encodedProfile = Base64.getEncoder().encodeToString(profileData.getBytes(StandardCharsets.UTF_8));
 
         // create strings
         String jsString = "speedscope.loadFileFromBase64(" + "\"" + title + "\", " + "\"" + encodedProfile + "\"" + ")";
@@ -362,6 +360,8 @@ public class RunCodeProfilerAction extends AnAction {
      *
      * @param edgeworkerWrapper wrapper instance to call CLI with
      * @param event             event which triggered the action
+     * @param profilingMode     String specifying whether to profile CPU or memory usage.
+     *                          Must be one of {@link Constants#CPU_PROFILING} or {@link Constants#MEM_PROFILING}
      * @param uri               uri to EdgeWorker
      * @param httpMethod        what Http method to use
      * @param eventHandler      event handler to profile
@@ -371,7 +371,7 @@ public class RunCodeProfilerAction extends AnAction {
      * @param edgeIpOverride    IP address that can be used to override the IP lookup for the EdgeWorkers staging server.
      *                          Will automatically determine IP address if null.
      */
-    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, URI uri, String httpMethod, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers, @Nullable InetAddress edgeIpOverride) {
+    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, String profilingMode, URI uri, String httpMethod, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers, @Nullable InetAddress edgeIpOverride) {
         codeProfiler.setIsLoading(true);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
             try {
@@ -396,13 +396,14 @@ public class RunCodeProfilerAction extends AnAction {
 
                 // Get staging IP
                 ProgressManager.getInstance().getProgressIndicator().setText("Determining staging IP address...");
+                String stagingName = getStagingName(uri.getHost());
                 InetAddress stagingIp;
                 if (edgeIpOverride == null) {
-                    stagingIp = getStagingIp(uri.getHost());
+                    stagingIp = InetAddress.getByName(stagingName);
                 } else {
-                    stagingIp = edgeIpOverride;
+                    // use staging hostname but override IP
+                    stagingIp = InetAddress.getByAddress(stagingName, edgeIpOverride.getAddress());
                 }
-
 
                 // Get secure trace headers
                 ProgressManager.getInstance().getProgressIndicator().setText("Generating secure trace header...");
@@ -415,8 +416,11 @@ public class RunCodeProfilerAction extends AnAction {
 
                 // Set headers
                 headers.add(secureTraceTokenHeader);
-                headers.add(new String[]{"x-ew-code-profile-" + eventHandler.toLowerCase(), "on"});
                 headers.add(new String[]{"user-agent", Constants.EW_USER_AGENT});
+                headers.add(new String[]{"x-ew-code-profile-" + eventHandler.toLowerCase(), "on"});
+                if (profilingMode.equals(Constants.MEM_PROFILING)) {
+                    headers.add(new String[]{Constants.EW_MEM_PROFILING_HEADER, "on"});
+                }
 
                 // Add Host header if not already set by the user
                 boolean hostExists = false;
@@ -433,9 +437,14 @@ public class RunCodeProfilerAction extends AnAction {
                 // Make http call
                 ProgressManager.getInstance().getProgressIndicator().setText("Getting profiling data...");
                 String jsonString = callCodeProfiler(uri, httpMethod, stagingIp, headers);
+                if (profilingMode.equals(Constants.MEM_PROFILING) && jsonString.startsWith("{\"nodes\"")) {
+                    // we got back the cpuprofile and not the heapprofile, shouldn't really happen in prod
+                    throw new Exception("Expected memory profile response, received CPU profile.");
+                }
 
                 // Save json string to file
-                String dest = saveStringToFile(filePath + fileName + ".cpuprofile", jsonString);
+                String fileExtension = profilingMode.equals(Constants.MEM_PROFILING) ? ".heapprofile" : ".cpuprofile";
+                String dest = saveStringToFile(filePath + fileName + fileExtension, jsonString);
                 EdgeWorkerNotification.notifyInfo(event.getProject(), "Successfully downloaded code profile to path: " + dest);
 
                 // Convert to speedscope js & html files
@@ -444,9 +453,9 @@ public class RunCodeProfilerAction extends AnAction {
                 File htmlFile;
                 try {
                     String convertName = Constants.CONVERTED_FILE_NAME + "-" + System.currentTimeMillis();
-                    htmlFile = convertCpuProfile(convertName, jsonString, fileName, speedScopeIndex);
+                    htmlFile = convertCodeProfile(convertName, jsonString, fileName, speedScopeIndex);
                 } catch (IOException ioException) {
-                    Messages.showErrorDialog("Error: Unable to convert cpuprofile", "Fatal Error");
+                    Messages.showErrorDialog("Error: Unable to convert code profile", "Fatal Error");
                     throw new Exception();
                 }
 
@@ -479,6 +488,7 @@ public class RunCodeProfilerAction extends AnAction {
             return;
         }
         EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper();
+        String profilingMode = codeProfiler.getProfilingMode();
         String edgeWorkerURL = codeProfiler.getEdgeWorkerURL();
         String httpMethod = codeProfiler.getHttpMethod();
         String eventHandler = codeProfiler.getSelectedEventHandler();
@@ -505,7 +515,7 @@ public class RunCodeProfilerAction extends AnAction {
                 filePath = filePath + File.separator;
             }
 
-            profileEdgeWorker(edgeworkerWrapper, e, uri, httpMethod, eventHandler, filePath, fileName, headers, edgeIpOverride);
+            profileEdgeWorker(edgeworkerWrapper, e, profilingMode, uri, httpMethod, eventHandler, filePath, fileName, headers, edgeIpOverride);
         } catch (URISyntaxException ex) {
             // this should never really happen because the UI will validate the URL for us
             EdgeWorkerNotification.notifyError(e.getProject(), "Error: EdgeWorker URL is an invalid URL");

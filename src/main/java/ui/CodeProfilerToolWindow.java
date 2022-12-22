@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.ui.CollapsiblePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import utils.Constants;
@@ -29,6 +30,8 @@ public class CodeProfilerToolWindow {
 
     private final ResourceBundle resourceBundle;
     private final SimpleToolWindowPanel panel;
+    private JBRadioButton cpuButton;
+    private JBRadioButton memoryButton;
     private JBHintTextField edgeWorkerURLValue;
     private ComboBox<String> eventHandlerDropdown;
     private ComboBox<String> methodDropdown;
@@ -57,6 +60,10 @@ public class CodeProfilerToolWindow {
             actionManager.unregisterAction(resourceBundle.getString("action.runCodeProfiler.id"));
         }
         actionManager.registerAction(resourceBundle.getString("action.runCodeProfiler.id"), new RunCodeProfilerAction(this));
+    }
+
+    public String getProfilingMode() {
+        return cpuButton.isSelected() ? Constants.CPU_PROFILING : Constants.MEM_PROFILING;
     }
 
     public String getSelectedEventHandler() {
@@ -318,6 +325,17 @@ public class CodeProfilerToolWindow {
         edgeIpOverride = new JBHintTextField("Enter edge server IP address", 18);
         defaultBorder = edgeWorkerURLValue.getBorder();
 
+        // Radio Group
+        cpuButton = new JBRadioButton("CPU Profiling");
+        memoryButton = new JBRadioButton("Memory Profiling");
+        cpuButton.setSelected(true);
+        JPanel modeButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        modeButtons.add(cpuButton);
+        modeButtons.add(memoryButton);
+        ButtonGroup radioGroup = new ButtonGroup();
+        radioGroup.add(cpuButton);
+        radioGroup.add(memoryButton);
+
         // Error Labels
         edgeWorkerURLValueErrorLabel = new JBLabel("The EdgeWorker URL must be a valid URL");
         edgeWorkerURLValueErrorLabel.setVisible(false);
@@ -344,6 +362,12 @@ public class CodeProfilerToolWindow {
         layout.setAutoCreateContainerGaps(true);
 
         // Sub Panels
+        // Top Row Panel
+        JPanel topRow = new JPanel(new BorderLayout());
+        topRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, cpuButton.getPreferredSize().height));
+        topRow.add(stagingLabel, BorderLayout.WEST);
+        topRow.add(modeButtons, BorderLayout.EAST);
+
         // URL + Method Panel
         JPanel urlMethodPanel = new JPanel(new BorderLayout());
         urlMethodPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, methodDropdown.getPreferredSize().height));
@@ -406,7 +430,7 @@ public class CodeProfilerToolWindow {
                         .addComponent(edgeIpOverride)
                 )
         );
-        CollapsiblePanel collapsibleAdvanced = new CollapsiblePanel(advancedPanel, true, true, AllIcons.Actions.Collapseall, AllIcons.Actions.Expandall, "Advanced");
+        CollapsiblePanel collapsibleAdvanced = new CollapsiblePanel(advancedPanel, true, true, AllIcons.Actions.Collapseall, AllIcons.Actions.Expandall, "");
 
         //      Panel For the whole row
         JPanel bottomRow = new JPanel(new BorderLayout());
@@ -419,7 +443,7 @@ public class CodeProfilerToolWindow {
 
         // Layout Components
         layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(stagingLabel, GroupLayout.Alignment.LEADING)
+                .addComponent(topRow, GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                 .addComponent(ewNameLabel)
@@ -444,7 +468,7 @@ public class CodeProfilerToolWindow {
         );
 
         layout.setVerticalGroup(layout.createSequentialGroup()
-                .addComponent(stagingLabel)
+                .addComponent(topRow)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
                         .addComponent(ewNameLabel)
                         .addComponent(urlMethodPanel)
