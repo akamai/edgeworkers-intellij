@@ -30,7 +30,7 @@
    they use multiple .edgerc sections or a custom edgerc path they will, and Akamai internal users will likely need to
    fill in Account Key here:
 
-<img src="https://lh5.googleusercontent.com/-lZtOKjjEfTFWZVRet_zPExUYsAvD0ycGEsyKGQaz0ajDbSCOl-lL3hqsdOYHY_mbNgxIpTgjVT28mZW16E2-4vlcLm5P5trdtX45Oi2kDbT9s43wijePnmnVhd2rCdai0ZchtsI=s0" width="300px">
+   <img src="https://lh5.googleusercontent.com/-lZtOKjjEfTFWZVRet_zPExUYsAvD0ycGEsyKGQaz0ajDbSCOl-lL3hqsdOYHY_mbNgxIpTgjVT28mZW16E2-4vlcLm5P5trdtX45Oi2kDbT9s43wijePnmnVhd2rCdai0ZchtsI=s0" width="300px">
 
 ## Functionality
 
@@ -83,3 +83,20 @@
 11. Code profiling is available by bringing up the bottom panel. More info on profiling code with the EdgeWorkers
     Toolkit for IntelliJ, check
     out [Akamai Techdocs page on the EdgeWorkers Code Profiler](https://techdocs.akamai.com/edgeworkers/docs/edgeworkers-code-profiler).
+
+## Development
+
+To run the extension locally perform the following steps:
+
+1. Go to `File -> Project Structure -> Project` set the `SDK` to a Java 11 SDK.
+
+2. Go to `Preferences -> Build, Execution, Deployment -> Build Tools -> Gradle` and ensure that the `Gradle JVM` is set
+   to use the Project SDK.
+
+3. To build the project, open the gradle tab and run `build`. Use `clean` to delete the build directory if needed.
+
+4. To run the plugin, run the `runIde` task found under the IntelliJ group. This task will also compile any new changes
+   made since the last run.
+
+For a full list of Gradle tasks see
+here: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks
