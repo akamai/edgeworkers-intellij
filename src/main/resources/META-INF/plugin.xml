@@ -32,7 +32,7 @@
                                  instance="config.EdgeWorkersConfiguration"/>
         <applicationService serviceImplementation="config.SettingsService"/>
         <toolWindow factoryClass="ui.ListEdgeWorkersToolWindowFactory" id="EdgeWorkers Explorer" anchor="left"
-                    secondary="true"/>
+                    secondary="true" icon="AllIcons.General.InspectionsEye"/>
         <toolWindow factoryClass="ui.CodeProfilerToolWindowFactory" id="EdgeWorkers Code Profiler" anchor="bottom"
                     icon="AllIcons.Actions.ProfileCPU"/>
         <notificationGroup id="EdgeWorkers Notification Group" displayType="BALLOON"/>
