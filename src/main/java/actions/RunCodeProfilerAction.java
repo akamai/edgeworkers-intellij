@@ -313,6 +313,14 @@ public class RunCodeProfilerAction extends AnAction {
         }
     }
 
+    /**
+     * Save a string to the disk
+     *
+     * @param pathname Pathname String of file to be written
+     * @param data     Data String to be written to disk
+     * @return Absolute path of written file
+     * @throws Exception Thrown if file cannot be written to pathname
+     */
     private String saveStringToFile(String pathname, String data) throws Exception {
         try {
             File file = new File(pathname);

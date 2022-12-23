@@ -18,11 +18,22 @@ public class JBHintTextField extends JBTextField implements FocusListener {
     private boolean showingHint;
 
 
+    /**
+     * Create a new hint text field
+     *
+     * @param hint    Hint to be shown when no text has been entered
+     * @param columns Width of the text field
+     */
     public JBHintTextField(String hint, int columns) {
         super(columns);
         init(hint);
     }
 
+    /**
+     * Create a new hint text field
+     *
+     * @param hint Hint to be shown when no text has been entered
+     */
     public JBHintTextField(String hint) {
         super();
         init(hint);
@@ -50,15 +61,32 @@ public class JBHintTextField extends JBTextField implements FocusListener {
         }
     }
 
+    /**
+     * Show the hint text
+     */
     private void showHintText() {
         showingHint = true;
         super.setText(hint);
         super.setForeground(hintColor);
     }
 
+    /**
+     * Hide the hint text and show an empty text field instead
+     */
     private void hideHintText() {
         showingHint = false;
         super.setText("");
+        super.setForeground(defaultColor);
+    }
+
+    /**
+     * Hide the hint text and show a text field instead
+     *
+     * @param t The new text to be shown
+     */
+    private void hideHintText(String t) {
+        showingHint = false;
+        super.setText(t);
         super.setForeground(defaultColor);
     }
 
@@ -72,13 +100,14 @@ public class JBHintTextField extends JBTextField implements FocusListener {
         if (t == null || t.isEmpty()) {
             showHintText();
         } else {
-            showingHint = false;
-            super.setText(t);
-            super.setForeground(defaultColor);
+            hideHintText(t);
         }
     }
 
-    public void resetText() {
+    /**
+     * Reset the text field and display the hint text
+     */
+    public void reset() {
         showHintText();
     }
 }

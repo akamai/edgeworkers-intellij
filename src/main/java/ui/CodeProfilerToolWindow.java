@@ -277,14 +277,14 @@ public class CodeProfilerToolWindow {
     private void handleReset() {
         // clear fields, dropdowns, table
         shouldValidate = false;
-        edgeWorkerURLValue.resetText();
+        edgeWorkerURLValue.reset();
         methodDropdown.setItem(methodDropdown.getItemAt(0));
         eventHandlerDropdown.setItem(eventHandlerDropdown.getItemAt(0));
-        samplingInterval.resetText();
-        filePath.resetText();
-        fileName.resetText();
+        samplingInterval.reset();
+        filePath.reset();
+        fileName.reset();
         tableModel.setRowCount(0);
-        edgeIpOverride.resetText();
+        edgeIpOverride.reset();
 
         // clear errors
         edgeWorkerURLValueErrorLabel.setVisible(false);
