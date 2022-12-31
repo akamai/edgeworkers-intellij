@@ -84,9 +84,9 @@
     Toolkit for IntelliJ, check
     out [Akamai Techdocs page on the EdgeWorkers Code Profiler](https://techdocs.akamai.com/edgeworkers/docs/edgeworkers-code-profiler).
 
-## Development
+## Contibuting / Development
 
-To run the extension locally perform the following steps:
+To run the extension locally in IntelliJ Community Edition, perform the following steps:
 
 1. Go to `File -> Project Structure -> Project` set the `SDK` to a Java 11 SDK.
 
