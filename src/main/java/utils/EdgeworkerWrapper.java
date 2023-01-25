@@ -308,7 +308,7 @@ public class EdgeworkerWrapper implements Disposable {
             cmd.addAll(Arrays.asList("--accountkey", edgeWorkersConfig.getAccountKey()));
         }
         if(this.addIdeExtensionOptionWithCorrectAkamaiVersion() == true) {
-            cmd.addAll(Arrays.asList("--ideExtensionType", "INTELLIJ"));
+            cmd.addAll(Arrays.asList("--ideExtension", "INTELLIJ"));
         }
         return cmd;
     }
@@ -642,10 +642,11 @@ public class EdgeworkerWrapper implements Disposable {
                 public void run() {
                     try {
                         ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
-                        //check version of akamai cli edgeworkers
-                        String output = executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "--version"));
+                                                    //check version of akamai cli edgeworkers
+                        String output = executeCommandAndGetOutput(getCLICommandLineByParams( "akamai","edgeworkers","--version"));
                         String[] substrings = output.replaceAll("\n","").split(" ");
-                        if(substrings[substrings.length - 1].compareTo("1.6.1") > 1) {
+                        if(substrings[substrings.length - 1].compareTo("1.6.1") > 0) {
+                            System.out.println("The output for akamai edgeworkers version:"+substrings[substrings.length -1]);
                             //if the current akamai version(1.5.1 current) is greater than 1.6.1
                             // which means we have api and cli updated for adding ideExtensionType option
                             akamaiVersionIsGood[0] = true;
