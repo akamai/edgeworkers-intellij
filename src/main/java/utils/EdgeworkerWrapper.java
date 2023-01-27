@@ -43,7 +43,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 public class EdgeworkerWrapper implements Disposable {
 
     private ToolWindowManager toolWindowManager;
@@ -306,6 +307,9 @@ public class EdgeworkerWrapper implements Disposable {
         if (null != edgeWorkersConfig.getAccountKey() && !edgeWorkersConfig.getAccountKey().isEmpty()) {
             cmd.addAll(Arrays.asList("--accountkey", edgeWorkersConfig.getAccountKey()));
         }
+        if(this.addIdeExtensionOptionWithCorrectAkamaiVersion() == true) {
+            cmd.addAll(Arrays.asList("--ideExtension", "INTELLIJ"));
+        }
         return cmd;
     }
 
@@ -563,6 +567,8 @@ public class EdgeworkerWrapper implements Disposable {
         return commandLine;
     }
 
+
+
     public boolean checkIfAkamaiCliInstalled() {
         final boolean[] akamaiCliInstalled = {true};
         final boolean[] edgeWorkersCliInstalled = {true};
@@ -626,6 +632,32 @@ public class EdgeworkerWrapper implements Disposable {
             exception.printStackTrace();
         }
         return akamaiCliInstalled[0] && edgeWorkersCliInstalled[0] && sandboxCliInstalled[0] && edgercFileExist[0];
+    }
+
+    //check akamai version
+    public boolean addIdeExtensionOptionWithCorrectAkamaiVersion() {
+        final boolean[] akamaiVersionIsGood = {false}; // boolean to set to true if the akamai --version is greter than 1.6.1
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ProgressManager.getInstance().getProgressIndicator().setText("Loading...");
+                                                    //check version of akamai cli edgeworkers
+                        String output = executeCommandAndGetOutput(getCLICommandLineByParams( "akamai","edgeworkers","--version"));
+                        String[] substrings = output.replaceAll("\n","").split(" ");
+                        if(substrings[substrings.length - 1].compareTo("1.6.1") > 0) {
+                            System.out.println("The output for akamai edgeworkers version:"+substrings[substrings.length -1]);
+                            //if the current akamai version(1.5.1 current) is greater than 1.6.1
+                            // which means we have api and cli updated for adding ideExtensionType option
+                            akamaiVersionIsGood[0] = true;
+                        }
+                    } catch (Exception exception) {
+                        akamaiVersionIsGood[0] = false;
+                        exception.printStackTrace();
+                    }
+                }
+            }, "", false, project);
+        return akamaiVersionIsGood[0];
     }
 
     private void suppressCliPrompts() {
