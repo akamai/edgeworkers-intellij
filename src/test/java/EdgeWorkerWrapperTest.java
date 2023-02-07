@@ -13,6 +13,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import utils.EdgeworkerWrapper;
+import java.util.Arrays;
+
+import java.util.ArrayList;
 
 public class EdgeWorkerWrapperTest extends BasePlatformTestCase {
     protected CodeInsightTestFixture myFixture;
@@ -85,6 +88,27 @@ public class EdgeWorkerWrapperTest extends BasePlatformTestCase {
         Mockito.verify(edgeworkerWrapperSpy, Mockito.times(1)).executeCommand(edgeWorkerInstallGCL);
         Mockito.verify(edgeworkerWrapperSpy, Mockito.times(1)).executeCommand(sandboxInstalledGCL);
         Mockito.verify(edgeworkerWrapperSpy, Mockito.times(1)).showErrorDialog("Please install akamai sandbox cli", "Error");
+    }
+    @Test
+    public void test_checkIfIdeExtensionTypeOptionIsAddedWhenAkamaiCLiIsGood() throws Exception{
+        ArrayList<String> cmd = new ArrayList<>();
+        ArrayList<String> result = new ArrayList<>();
+        cmd.addAll(Arrays.asList("--edgerc"));
+        Mockito.doReturn(true).when(edgeworkerWrapperSpy).addIdeExtensionOptionWithCorrectAkamaiVersion();
+        Mockito.doCallRealMethod().when(edgeworkerWrapperSpy).addOptionsParams(Mockito.any());
+        result  = edgeworkerWrapperSpy.addOptionsParams(cmd);
+        assertEquals(result.contains("INTELLIJ"),true);
+
+    }
+    @Test
+    public void test_checkIfIdeExtensionTypeOptionIsAddedWhenAkamaiCLiIsNotGood() throws Exception{
+        ArrayList<String> cmd = new ArrayList<>();
+        ArrayList<String> result = new ArrayList<>();
+        cmd.addAll(Arrays.asList("--edgerc"));
+        Mockito.doReturn(false).when(edgeworkerWrapperSpy).addIdeExtensionOptionWithCorrectAkamaiVersion();
+        Mockito.doCallRealMethod().when(edgeworkerWrapperSpy).addOptionsParams(Mockito.any());
+        result  = edgeworkerWrapperSpy.addOptionsParams(cmd);
+        assertEquals(result.contains("INTELLIJ"),false);
     }
 
     @Test
