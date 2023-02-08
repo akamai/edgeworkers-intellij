@@ -17,7 +17,8 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 
 /**
- * Simple FileEditor Implementation that will take an HTML file and display it using JCEF
+ * Simple FileEditor Implementation that will take an HTML file and display it using JCEF.
+ * Will throw a runtime error if JCEF is not supported and the class attempts to display an HTML file.
  */
 public class HtmlFileEditor extends UserDataHolderBase implements FileEditor {
     private final VirtualFile file;

@@ -50,14 +50,14 @@ public class CreateAndValidateBundleTest extends BasePlatformTestCase{
     public void test_getValidateBundleCommand_whenAccountKeyIsPresent() throws Exception{
         config.setAccountKey("testKey");
         GeneralCommandLine validateBundleCommand = edgeworkerWrapper.getValidateBundleCommand(myFixture.getTestDataPath(), myFixture.getFile().getParent().getVirtualFile());
-        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --accountkey, testKey]", validateBundleCommand.toString());
+        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --accountkey, testKey, --ideExtension, INTELLIJ]", validateBundleCommand.toString());
     }
 
     public void test_getValidateBundleCommand_whenAccountKeyAndEdgercSectionIsPresent() throws Exception{
         config.setAccountKey("testKey");
         config.setEdgercSectionName("default");
         GeneralCommandLine validateBundleCommand = edgeworkerWrapper.getValidateBundleCommand(myFixture.getTestDataPath(), myFixture.getFile().getParent().getVirtualFile());
-        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --section, default, --accountkey, testKey]", validateBundleCommand.toString());
+        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --section, default, --accountkey, testKey, --ideExtension, INTELLIJ]", validateBundleCommand.toString());
     }
 
     public void test_getValidateBundleCommand_whenAccountKeyEdgercSectionAndPathIsPresent() throws Exception{
@@ -65,7 +65,7 @@ public class CreateAndValidateBundleTest extends BasePlatformTestCase{
         config.setEdgercSectionName("default2");
         config.setEdgercFilePath("~/.edgerc");
         GeneralCommandLine validateBundleCommand = edgeworkerWrapper.getValidateBundleCommand(myFixture.getTestDataPath(), myFixture.getFile().getParent().getVirtualFile());
-        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --edgerc, ~/.edgerc, --section, default2, --accountkey, testKey2]", validateBundleCommand.toString());
+        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --edgerc, ~/.edgerc, --section, default2, --accountkey, testKey2, --ideExtension, INTELLIJ]", validateBundleCommand.toString());
     }
 
     public void test_createAndValidateBundle_whenMandatoryFilesArePresent() throws Exception{
@@ -88,7 +88,7 @@ public class CreateAndValidateBundleTest extends BasePlatformTestCase{
         assertTrue(Files.exists(Paths.get(myFixture.getTempDirPath()+"/edgeworker_bundle.tgz")));
 
         GeneralCommandLine validateBundleCommand = edgeworkerWrapper.getValidateBundleCommand(myFixture.getTestDataPath(), virtualFiles[0].getParent());
-        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz]", validateBundleCommand.toString());
+        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --ideExtension, INTELLIJ]", validateBundleCommand.toString());
     }
 
     public void test_createAndValidateBundle_whenAllMandatoryFilesAreNotPresent() throws Exception{
@@ -107,7 +107,7 @@ public class CreateAndValidateBundleTest extends BasePlatformTestCase{
         assertTrue(Files.exists(Paths.get(myFixture.getTempDirPath()+"/edgeworker_bundle.tgz")));
 
         GeneralCommandLine validateBundleCommand = edgeworkerWrapper.getValidateBundleCommand(myFixture.getTestDataPath(), virtualFiles[0].getParent());
-        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz]", validateBundleCommand.toString());
+        assertEquals("akamai [edgeworkers, validate, "+myFixture.getTempDirPath()+"/edgeworker_bundle.tgz, --ideExtension, INTELLIJ]", validateBundleCommand.toString());
     }
 
     private int executeCreateBundleCommand(EdgeworkerWrapper edgeworkerWrapper, VirtualFile[] virtualFiles) throws Exception{

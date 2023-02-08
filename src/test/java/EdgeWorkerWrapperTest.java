@@ -75,6 +75,9 @@ public class EdgeWorkerWrapperTest extends BasePlatformTestCase {
     public void test_checkIfAkamaiCliInstalled_whenSandboxCLINotInstalled() throws Exception{
         Mockito.doReturn("akamai").when(edgeworkerWrapperSpy).executeCommandAndGetOutput(Mockito.any());
         Mockito.doReturn(generalCommandLineMock).when(edgeworkerWrapperSpy).getCLICommandLineByParams("akamai", "help");
+        GeneralCommandLine edgeWorkerUpdateGCL = Mockito.mock(GeneralCommandLine.class);
+        Mockito.doReturn(edgeWorkerUpdateGCL).when(edgeworkerWrapperSpy).getCLICommandLineByParams("akamai", "update", "edgeworkers");
+        Mockito.doReturn(0).when(edgeworkerWrapperSpy).executeCommand(edgeWorkerUpdateGCL);
         GeneralCommandLine edgeWorkerInstallGCL = Mockito.mock(GeneralCommandLine.class);
         Mockito.doReturn(edgeWorkerInstallGCL).when(edgeworkerWrapperSpy).getCLICommandLineByParams("akamai", "install", "edgeworkers");
         Mockito.doReturn(0).when(edgeworkerWrapperSpy).executeCommand(edgeWorkerInstallGCL);
@@ -89,6 +92,27 @@ public class EdgeWorkerWrapperTest extends BasePlatformTestCase {
         Mockito.verify(edgeworkerWrapperSpy, Mockito.times(1)).executeCommand(sandboxInstalledGCL);
         Mockito.verify(edgeworkerWrapperSpy, Mockito.times(1)).showErrorDialog("Please install akamai sandbox cli", "Error");
     }
+
+    @Test
+    public void test_checkIfAkamaiCliInstalled_updateCLI() throws Exception{
+        Mockito.doReturn("akamai edgeworkers").when(edgeworkerWrapperSpy).executeCommandAndGetOutput(Mockito.any());
+        Mockito.doReturn(generalCommandLineMock).when(edgeworkerWrapperSpy).getCLICommandLineByParams("akamai", "help");
+        GeneralCommandLine edgeWorkerUpdateGCL = Mockito.mock(GeneralCommandLine.class);
+        Mockito.doReturn(edgeWorkerUpdateGCL).when(edgeworkerWrapperSpy).getCLICommandLineByParams("akamai", "update", "edgeworkers");
+        Mockito.doReturn(1).when(edgeworkerWrapperSpy).executeCommand(edgeWorkerUpdateGCL);
+        GeneralCommandLine edgeWorkerInstallGCL = Mockito.mock(GeneralCommandLine.class);
+        Mockito.doReturn(edgeWorkerInstallGCL).when(edgeworkerWrapperSpy).getCLICommandLineByParams("akamai", "install", "edgeworkers");
+        Mockito.doReturn(0).when(edgeworkerWrapperSpy).executeCommand(edgeWorkerInstallGCL);
+        GeneralCommandLine sandboxInstalledGCL = Mockito.mock(GeneralCommandLine.class);
+        Mockito.doReturn(sandboxInstalledGCL).when(edgeworkerWrapperSpy).getCLICommandLineByParams("akamai", "install", "sandbox");
+        Mockito.doReturn(1).when(edgeworkerWrapperSpy).executeCommand(sandboxInstalledGCL);
+
+        Mockito.doCallRealMethod().when(edgeworkerWrapperSpy).checkIfAkamaiCliInstalled();
+        Boolean result = edgeworkerWrapperSpy.checkIfAkamaiCliInstalled();
+
+        Mockito.verify(edgeworkerWrapperSpy, Mockito.times(1)).updateEdgeWorkersCLI();
+    }
+
     @Test
     public void test_checkIfIdeExtensionTypeOptionIsAddedWhenAkamaiCLiIsGood() throws Exception{
         ArrayList<String> cmd = new ArrayList<>();

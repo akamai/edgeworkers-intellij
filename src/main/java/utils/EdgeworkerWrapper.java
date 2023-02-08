@@ -586,8 +586,11 @@ public class EdgeworkerWrapper implements Disposable {
                         if (!output.contains("akamai")) {
                             akamaiCliInstalled[0] = false;
                         } else {
-                            //install Akamai EdgeWorker CLI if not already installed
-                            if (!output.contains("edgeworkers")) {
+                            if (output.contains("edgeworkers")) {
+                                //attempt to upgrade edgeworkers CLI
+                                updateEdgeWorkersCLI();
+                            } else {
+                                //install Akamai EdgeWorker CLI if not already installed
                                 ProgressManager.getInstance().getProgressIndicator().setText("Installing Akamai EdgeWorkers CLI...");
                                 if (executeCommand(getCLICommandLineByParams("akamai", "install", "edgeworkers")) == 1) {
                                     edgeWorkersCliInstalled[0] = false;
@@ -632,6 +635,23 @@ public class EdgeworkerWrapper implements Disposable {
             exception.printStackTrace();
         }
         return akamaiCliInstalled[0] && edgeWorkersCliInstalled[0] && sandboxCliInstalled[0] && edgercFileExist[0];
+    }
+
+
+    static boolean updateAttempted = false;
+    public void updateEdgeWorkersCLI() {
+        // update EdgeWorkers CLI -- it's not easy to find if we have the latest other than to attempt upgrade
+        // so we can do this upgrade attempt quietly to not annoy users
+        // do the attempt once per process init using the static variable above
+        if (!updateAttempted) {
+            try {
+                executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "update", "edgeworkers"));
+            } catch (Exception exception) {
+                // the above command failing is non critical so we won't do anything on failure
+                // just catch the error to prevent it from causing problems for extension use
+            }
+            updateAttempted = true;
+        }
     }
 
     //check akamai version

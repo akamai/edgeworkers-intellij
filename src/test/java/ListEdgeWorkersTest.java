@@ -45,12 +45,12 @@ public class ListEdgeWorkersTest extends BasePlatformTestCase{
     public void test_getEdgeWorkerVersionListCommand() throws Exception{
         config.setAccountKey("testKey");
         GeneralCommandLine commandLine = edgeworkerWrapper.getEdgeWorkerVersionListCommand("123" , "tmpFile");
-        assertEquals("akamai [edgeworkers, list-versions, 123, --json, tmpFile, --accountkey, testKey]", commandLine.toString());
+        assertEquals("akamai [edgeworkers, list-versions, 123, --json, tmpFile, --accountkey, testKey, --ideExtension, INTELLIJ]", commandLine.toString());
     }
 
     public void test_getEdgeWorkersIdsListCommand() throws Exception{
         GeneralCommandLine commandLine = edgeworkerWrapper.getEdgeWorkersIdsListCommand( "tmpFile");
-        assertEquals("akamai [edgeworkers, list-ids, --json, tmpFile]", commandLine.toString());
+        assertEquals("akamai [edgeworkers, list-ids, --json, tmpFile, --ideExtension, INTELLIJ]", commandLine.toString());
     }
 
     public void test_parseEdgeWorkersTempFile_whenListIds() throws Exception{

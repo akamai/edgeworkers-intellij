@@ -1,14 +1,18 @@
 package ui;
 
 import actions.RunCodeProfilerAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
+import com.intellij.ui.CollapsiblePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import utils.Constants;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -26,16 +30,22 @@ public class CodeProfilerToolWindow {
 
     private final ResourceBundle resourceBundle;
     private final SimpleToolWindowPanel panel;
+    private JBRadioButton cpuButton;
+    private JBRadioButton memoryButton;
     private JBHintTextField edgeWorkerURLValue;
     private ComboBox<String> eventHandlerDropdown;
+    private ComboBox<String> methodDropdown;
+    private JBHintTextField samplingInterval;
     private JBHintTextField filePath;
     private JBHintTextField fileName;
     private DefaultTableModel tableModel;
     private JBTable headersTable;
+    private JBHintTextField edgeIpOverride;
     private boolean isLoading;
     private boolean shouldValidate;
     private Border defaultBorder;
     private JBLabel edgeWorkerURLValueErrorLabel;
+    private JBLabel samplingIntervalErrorLabel;
     private JBLabel filePathErrorLabel;
     private JBLabel headersTableErrorLabel;
 
@@ -52,12 +62,28 @@ public class CodeProfilerToolWindow {
         actionManager.registerAction(resourceBundle.getString("action.runCodeProfiler.id"), new RunCodeProfilerAction(this));
     }
 
+    public String getProfilingMode() {
+        return cpuButton.isSelected() ? Constants.CPU_PROFILING : Constants.MEM_PROFILING;
+    }
+
     public String getSelectedEventHandler() {
         return eventHandlerDropdown.getItem();
     }
 
     public String getEdgeWorkerURL() {
         return edgeWorkerURLValue.getText();
+    }
+
+    public String getHttpMethod() {
+        return methodDropdown.getItem();
+    }
+
+    public String getSamplingInterval() {
+        if (!samplingInterval.getText().isBlank()) {
+            return samplingInterval.getText();
+        } else {
+            return Constants.EW_DEFAULT_SAMPLING_SIZE;
+        }
     }
 
     public String getFilePath() {
@@ -91,6 +117,15 @@ public class CodeProfilerToolWindow {
         return tableData;
     }
 
+    /**
+     * Get the edge ip override
+     *
+     * @return String containing user inputted edge IP, or null if no IP has been entered
+     */
+    public String getEdgeIpOverride() {
+        return edgeIpOverride.getText().isEmpty() ? null : edgeIpOverride.getText();
+    }
+
     public boolean getIsLoading() {
         return isLoading;
     }
@@ -119,14 +154,15 @@ public class CodeProfilerToolWindow {
     }
 
     private boolean validateEdgeWorkerUrlValue() {
-        if (edgeWorkerURLValue.getText().isBlank()) {
+        String ewUrl = getEdgeWorkerURL();
+        if (ewUrl.isBlank()) {
             setEdgeWorkerURLValueError("The EdgeWorker URL cannot be empty");
-        } else if (!edgeWorkerURLValue.getText().startsWith("http://") && !edgeWorkerURLValue.getText().startsWith("https://")) {
+        } else if (!ewUrl.startsWith("http://") && !ewUrl.startsWith("https://")) {
             setEdgeWorkerURLValueError("The EdgeWorker URL must contain the HTTP protocol");
         } else {
             // check if valid URI
             try {
-                URI uri = new URI(edgeWorkerURLValue.getText()); // throws if violates RFC 2396
+                URI uri = new URI(ewUrl); // throws if violates RFC 2396
                 if (uri.getHost() == null) {
                     throw new Exception();
                 }
@@ -140,10 +176,22 @@ public class CodeProfilerToolWindow {
         return false;
     }
 
+    private boolean validateSamplingSize() {
+        boolean isValid;
+        try {
+            isValid = Integer.parseInt(getSamplingInterval()) > 0;
+        } catch (NumberFormatException ex) {
+            isValid = false;
+        }
+        samplingIntervalErrorLabel.setVisible(!isValid);
+        samplingInterval.setBorder(isValid ? defaultBorder : BorderFactory.createLineBorder(JBColor.RED));
+        return isValid;
+    }
+
     private boolean validateFilePath() {
         boolean exists;
         try {
-            exists = Files.exists(Paths.get(filePath.getText()));
+            exists = Files.exists(Paths.get(getFilePath()));
         } catch (Exception ex) {
             exists = false;
         }
@@ -181,6 +229,17 @@ public class CodeProfilerToolWindow {
             }
         });
 
+        samplingInterval.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (shouldValidate) validateSamplingSize();
+            }
+        });
+
         filePath.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent focusEvent) {
@@ -200,7 +259,8 @@ public class CodeProfilerToolWindow {
     }
 
     private boolean validateForm() {
-        return (validateEdgeWorkerUrlValue() & validateFilePath() & validateHeaders()); // bitwise & to prevent short circuit
+        // bitwise & to prevent short circuit
+        return (validateEdgeWorkerUrlValue() & validateSamplingSize() & validateFilePath() & validateHeaders());
     }
 
     private void handleRun(Component contextComponent) {
@@ -215,16 +275,22 @@ public class CodeProfilerToolWindow {
     }
 
     private void handleReset() {
+        // clear fields, dropdowns, table
         shouldValidate = false;
-        edgeWorkerURLValue.resetText();
+        edgeWorkerURLValue.reset();
+        methodDropdown.setItem(methodDropdown.getItemAt(0));
         eventHandlerDropdown.setItem(eventHandlerDropdown.getItemAt(0));
-        filePath.resetText();
-        fileName.resetText();
+        samplingInterval.reset();
+        filePath.reset();
+        fileName.reset();
         tableModel.setRowCount(0);
+        edgeIpOverride.reset();
 
         // clear errors
         edgeWorkerURLValueErrorLabel.setVisible(false);
         edgeWorkerURLValue.setBorder(defaultBorder);
+        samplingIntervalErrorLabel.setVisible(false);
+        samplingInterval.setBorder(defaultBorder);
         filePathErrorLabel.setVisible(false);
         filePath.setBorder(defaultBorder);
         headersTableErrorLabel.setVisible(false);
@@ -240,23 +306,43 @@ public class CodeProfilerToolWindow {
         errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
 
         // Labels
+        JBLabel stagingLabel = new JBLabel("Profile an EdgeWorker deployed to the Akamai staging network");
         JBLabel ewNameLabel = new JBLabel("EdgeWorker URL:");
         JBLabel eventHandlerLabel = new JBLabel("Event Handler:");
+        JBLabel samplingSizeLabel = new JBLabel("Sampling Interval (μs):");
         JBLabel filePathLabel = new JBLabel("File Path:");
         JBLabel fileNameLabel = new JBLabel("File Name:");
+        JBLabel edgeIpOverrideLabel = new JBLabel("Edge IP Override:");
         JBLabel headersLabel = new JBLabel("Request Headers:");
 
         // Text Fields
-        edgeWorkerURLValue = new JBHintTextField("eg: https://www.example.com", JBColor.gray);
+        edgeWorkerURLValue = new JBHintTextField("https://www.example.com");
+        methodDropdown = new ComboBox<>(Constants.EW_HTTP_METHODS);
         eventHandlerDropdown = new ComboBox<>(new String[]{"onClientRequest", "onOriginRequest", "onOriginResponse", "onClientResponse", "responseProvider"});
-        filePath = new JBHintTextField("eg: /Users/myUser/Downloads", JBColor.gray);
-        fileName = new JBHintTextField("eg: filename", JBColor.gray);
+        samplingInterval = new JBHintTextField("default: " + Constants.EW_DEFAULT_SAMPLING_SIZE + " μs");
+        filePath = new JBHintTextField("eg: /Users/myUser/Downloads");
+        fileName = new JBHintTextField("eg: filename");
+        edgeIpOverride = new JBHintTextField("Enter edge server IP address", 18);
         defaultBorder = edgeWorkerURLValue.getBorder();
+
+        // Radio Group
+        cpuButton = new JBRadioButton("CPU Profiling");
+        memoryButton = new JBRadioButton("Memory Profiling");
+        cpuButton.setSelected(true);
+        JPanel modeButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        modeButtons.add(cpuButton);
+        modeButtons.add(memoryButton);
+        ButtonGroup radioGroup = new ButtonGroup();
+        radioGroup.add(cpuButton);
+        radioGroup.add(memoryButton);
 
         // Error Labels
         edgeWorkerURLValueErrorLabel = new JBLabel("The EdgeWorker URL must be a valid URL");
         edgeWorkerURLValueErrorLabel.setVisible(false);
         edgeWorkerURLValueErrorLabel.setForeground(JBColor.red);
+        samplingIntervalErrorLabel = new JBLabel("The Sampling Interval must be a positive integer");
+        samplingIntervalErrorLabel.setVisible(false);
+        samplingIntervalErrorLabel.setForeground(JBColor.red);
         filePathErrorLabel = new JBLabel("The File Path is invalid or does not exist");
         filePathErrorLabel.setVisible(false);
         filePathErrorLabel.setForeground(JBColor.red);
@@ -264,6 +350,7 @@ public class CodeProfilerToolWindow {
         headersTableErrorLabel.setVisible(false);
         headersTableErrorLabel.setForeground(JBColor.red);
         errorPanel.add(edgeWorkerURLValueErrorLabel);
+        errorPanel.add(samplingIntervalErrorLabel);
         errorPanel.add(filePathErrorLabel);
         errorPanel.add(headersTableErrorLabel);
 
@@ -274,13 +361,26 @@ public class CodeProfilerToolWindow {
         layout.setAutoCreateGaps(true);
         layout.setAutoCreateContainerGaps(true);
 
-        // Table
+        // Sub Panels
+        // Top Row Panel
+        JPanel topRow = new JPanel(new BorderLayout());
+        topRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, cpuButton.getPreferredSize().height));
+        topRow.add(stagingLabel, BorderLayout.WEST);
+        topRow.add(modeButtons, BorderLayout.EAST);
+
+        // URL + Method Panel
+        JPanel urlMethodPanel = new JPanel(new BorderLayout());
+        urlMethodPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, methodDropdown.getPreferredSize().height));
+        urlMethodPanel.add(methodDropdown, BorderLayout.WEST);
+        urlMethodPanel.add(edgeWorkerURLValue, BorderLayout.CENTER);
+
+        // Table Panel
         tableModel = new DefaultTableModel(new Object[]{"Name", "Value"}, 0);
         headersTable = new JBTable(tableModel);
         JBScrollPane tablePanel = new JBScrollPane(headersTable);
         tablePanel.setMinimumSize(new Dimension(100, 50));
 
-        // Row Buttons
+        // Row Buttons Panel
         JButton deleteButton = new JButton("Delete Selected Headers");
         deleteButton.addActionListener(e -> deleteSelectedRows());
         deleteButton.setEnabled(false); // zero rows exist initially
@@ -294,7 +394,8 @@ public class CodeProfilerToolWindow {
         rowButtonsPanel.add(addButton, BorderLayout.WEST);
         rowButtonsPanel.add(deleteButton, BorderLayout.EAST);
 
-        // Run & Reset Buttons
+        // Bottom Row Panel
+        //      Buttons
         JButton runButton = new JButton("Run Profiler");
         runButton.addActionListener(e -> handleRun(runButton));
         runButton.setEnabled(!isLoading);
@@ -302,43 +403,83 @@ public class CodeProfilerToolWindow {
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener(e -> handleReset());
 
-        JPanel submitPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        submitPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getHeight()));
-        submitPanel.add(resetButton);
-        submitPanel.add(runButton);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, runButton.getPreferredSize().height));
+        buttons.add(resetButton);
+        buttons.add(runButton);
+
+        JPanel submitPanel = new JPanel(new BorderLayout());
+        submitPanel.add(buttons, BorderLayout.SOUTH);
+
+        //      Advanced Section
+        JPanel advancedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        GroupLayout advancedLayout = new GroupLayout(advancedPanel);
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
+        advancedLayout.setHorizontalGroup(advancedLayout.createSequentialGroup()
+                .addGroup(advancedLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(edgeIpOverrideLabel)
+                )
+                .addGroup(advancedLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(edgeIpOverride)
+                )
+        );
+        advancedLayout.setVerticalGroup(advancedLayout.createSequentialGroup()
+                .addGroup(advancedLayout.createParallelGroup()
+                        .addComponent(edgeIpOverrideLabel)
+                        .addComponent(edgeIpOverride)
+                )
+        );
+        CollapsiblePanel collapsibleAdvanced = new CollapsiblePanel(advancedPanel, true, true, AllIcons.Actions.Collapseall, AllIcons.Actions.Expandall, "");
+
+        //      Panel For the whole row
+        JPanel bottomRow = new JPanel(new BorderLayout());
+        bottomRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, collapsibleAdvanced.getPreferredSize().height));
+        bottomRow.add(collapsibleAdvanced, BorderLayout.CENTER);
+        bottomRow.add(submitPanel, BorderLayout.EAST);
 
         // Listeners
         setupValidationListeners();
 
         // Layout Components
-        layout.setHorizontalGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(ewNameLabel)
-                        .addComponent(eventHandlerLabel)
-                        .addComponent(filePathLabel)
-                        .addComponent(fileNameLabel)
-                        .addComponent(headersLabel)
-                )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(edgeWorkerURLValue)
-                        .addComponent(eventHandlerDropdown)
-                        .addComponent(filePath)
-                        .addComponent(fileName)
-                        .addComponent(tablePanel)
-                        .addComponent(rowButtonsPanel)
-                        .addComponent(errorPanel)
-                        .addComponent(submitPanel)
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(topRow, GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(ewNameLabel)
+                                .addComponent(eventHandlerLabel)
+                                .addComponent(samplingSizeLabel)
+                                .addComponent(filePathLabel)
+                                .addComponent(fileNameLabel)
+                                .addComponent(headersLabel)
+                        )
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(urlMethodPanel)
+                                .addComponent(eventHandlerDropdown)
+                                .addComponent(samplingInterval)
+                                .addComponent(filePath)
+                                .addComponent(fileName)
+                                .addComponent(tablePanel)
+                                .addComponent(rowButtonsPanel)
+                                .addComponent(errorPanel)
+                                .addComponent(bottomRow)
+                        )
                 )
         );
 
         layout.setVerticalGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(topRow)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
                         .addComponent(ewNameLabel)
-                        .addComponent(edgeWorkerURLValue)
+                        .addComponent(urlMethodPanel)
                 )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(eventHandlerLabel)
                         .addComponent(eventHandlerDropdown)
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(samplingSizeLabel)
+                        .addComponent(samplingInterval)
                 )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(filePathLabel)
@@ -352,15 +493,9 @@ public class CodeProfilerToolWindow {
                         .addComponent(headersLabel)
                         .addComponent(tablePanel)
                 )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(rowButtonsPanel)
-                )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(errorPanel)
-                )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(submitPanel)
-                )
+                .addComponent(rowButtonsPanel)
+                .addComponent(errorPanel)
+                .addComponent(bottomRow)
         );
 
         layoutPanel.setLayout(layout);

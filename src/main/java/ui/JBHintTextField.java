@@ -1,5 +1,6 @@
 package ui;
 
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTextField;
 
 import java.awt.*;
@@ -11,20 +12,37 @@ import java.awt.event.FocusListener;
  */
 public class JBHintTextField extends JBTextField implements FocusListener {
 
-    private final String hint;
-    private final Color defaultColor;
-    private final Color hintColor;
+    private String hint;
+    private Color defaultColor;
+    private Color hintColor;
     private boolean showingHint;
 
+
     /**
-     * Create a new JBHintTextField
+     * Create a new hint text field
      *
-     * @param hint Hint text to be shown when no input has been entered
+     * @param hint    Hint to be shown when no text has been entered
+     * @param columns Width of the text field
      */
-    public JBHintTextField(String hint, Color hintColor) {
+    public JBHintTextField(String hint, int columns) {
+        super(columns);
+        init(hint);
+    }
+
+    /**
+     * Create a new hint text field
+     *
+     * @param hint Hint to be shown when no text has been entered
+     */
+    public JBHintTextField(String hint) {
+        super();
+        init(hint);
+    }
+
+    private void init(String hint) {
         this.hint = hint;
         this.defaultColor = super.getForeground();
-        this.hintColor = hintColor;
+        this.hintColor = JBColor.gray;
         super.addFocusListener(this);
         showHintText();
     }
@@ -43,15 +61,32 @@ public class JBHintTextField extends JBTextField implements FocusListener {
         }
     }
 
+    /**
+     * Show the hint text
+     */
     private void showHintText() {
         showingHint = true;
         super.setText(hint);
         super.setForeground(hintColor);
     }
 
+    /**
+     * Hide the hint text and show an empty text field instead
+     */
     private void hideHintText() {
         showingHint = false;
         super.setText("");
+        super.setForeground(defaultColor);
+    }
+
+    /**
+     * Hide the hint text and show a text field instead
+     *
+     * @param t The new text to be shown
+     */
+    private void hideHintText(String t) {
+        showingHint = false;
+        super.setText(t);
         super.setForeground(defaultColor);
     }
 
@@ -60,7 +95,19 @@ public class JBHintTextField extends JBTextField implements FocusListener {
         return showingHint ? "" : super.getText();
     }
 
-    public void resetText() {
+    @Override
+    public void setText(String t) {
+        if (t == null || t.isEmpty()) {
+            showHintText();
+        } else {
+            hideHintText(t);
+        }
+    }
+
+    /**
+     * Reset the text field and display the hint text
+     */
+    public void reset() {
         showHintText();
     }
 }
