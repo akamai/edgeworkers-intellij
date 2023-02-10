@@ -249,61 +249,79 @@ public class RunCodeProfilerAction extends AnAction {
 
             headers.forEach((x) -> request.addHeader(x[0], x[1]));
 
-            response = client.execute(request);
+            // max 5 attempts in case we get back blank data due to memory profiler bug
+            // in most cases the first attempt has good data
+            int maxAttempts = 5;
+            for (int attempt = 0; attempt < maxAttempts; attempt++) {
+                System.out.println("Attempt " + attempt + " to get profile data");
+                response = client.execute(request);
 
-            entity = response.getEntity();
-            String contentType;
+                entity = response.getEntity();
+                String contentType;
 
-            if (entity == null || entity.getContentType() == null) {
-                // the response body is empty, seems to happen when the EdgeWorker runs into a limit while profiling
-                if (httpMethod.equals("HEAD")) {
-                    // not necessarily a timeout, could be just a regular HEAD request that did not return profiling info
-                    throw new Exception(noEventHandler);
+                if (entity == null || entity.getContentType() == null) {
+                    // the response body is empty, seems to happen when the EdgeWorker runs into a limit while profiling
+                    if (httpMethod.equals("HEAD")) {
+                        // not necessarily a timeout, could be just a regular HEAD request that did not return profiling info
+                        throw new Exception(noEventHandler);
+                    } else {
+                        throw new Exception("Received null response body or EdgeWorker took too long to respond.");
+                    }
                 } else {
-                    throw new Exception("Received null response body or EdgeWorker took too long to respond.");
+                    contentType = entity.getContentType().getValue();
                 }
-            } else {
-                contentType = entity.getContentType().getValue();
-            }
 
-            if (contentType.contains("application/json")) {
-                jsonString = EntityUtils.toString(entity);
-            } else if (contentType.contains("multipart/form-data")) {
-                try (InputStreamReader isr = new InputStreamReader(entity.getContent());
-                     BufferedReader reader = new BufferedReader(isr)) {
-                    // response provider event handler will return a multipart
-                    String boundary = contentType.split("(;\\s+boundary=)")[1];
-                    StringBuilder sb = new StringBuilder();
-                    String line = reader.readLine();
+                if (contentType.contains("application/json")) {
+                    jsonString = EntityUtils.toString(entity);
+                } else if (contentType.contains("multipart/form-data")) {
+                    try (InputStreamReader isr = new InputStreamReader(entity.getContent());
+                         BufferedReader reader = new BufferedReader(isr)) {
+                        // response provider event handler will return a multipart
+                        String boundary = contentType.split("(;\\s+boundary=)")[1];
+                        StringBuilder sb = new StringBuilder();
+                        String line = reader.readLine();
 
-                    while (line != null) {
-                        if (line.contains("content-disposition: form-data; name=\"cpu-profile\"") ||
-                                line.contains("content-disposition: form-data; name=\"memory-profile\"")) {
-                            // the next line is the break between the header and body of the section, let's skip it
-                            reader.readLine();
-                            line = reader.readLine();
+                        while (line != null) {
+                            if (line.contains("content-disposition: form-data; name=\"cpu-profile\"") ||
+                                    line.contains("content-disposition: form-data; name=\"memory-profile\"")) {
+                                // the next line is the break between the header and body of the section, let's skip it
+                                reader.readLine();
+                                line = reader.readLine();
 
-                            while (line != null && !line.startsWith("--" + boundary)) {
-                                // loop in the event that profile data is changed to a multi line response in the future
-                                sb.append(line).append(System.getProperty("line.separator"));
+                                while (line != null && !line.startsWith("--" + boundary)) {
+                                    // loop in the event that profile data is changed to a multi line response in the future
+                                    sb.append(line).append(System.getProperty("line.separator"));
+                                    line = reader.readLine();
+                                }
+                                break;
+                            } else {
                                 line = reader.readLine();
                             }
-                            break;
-                        } else {
-                            line = reader.readLine();
                         }
+                        jsonString = sb.toString();
                     }
-                    jsonString = sb.toString();
+                } else if (contentType.contains("text/html")) {
+                    // we are getting back the actual website, not the profiling results
+                    throw new Exception(noEventHandler);
                 }
-            } else if (contentType.contains("text/html")) {
-                // we are getting back the actual website, not the profiling results
-                throw new Exception(noEventHandler);
-            }
 
-            if (jsonString.startsWith("{\"nodes\"") || jsonString.startsWith("{\"head\"")) {
-                return jsonString;
-            } else {
-                throw new Exception(noEventHandler);
+                // there is a bug causing empty memory profile to come back in some cases
+                // this is usually resolved by re-attempting to get memory profile
+                // if this happens we can retry up to 5 times total
+                String emptyJson = "{\"head\":{\"callFrame\":{\"functionName\":\"(root)\",\"scriptId\":\"0\",\"url\":\"\",\"lineNumber\":-1,\"columnNumber\":-1},\"selfSize\":0,\"id\":1,\"children\":[]},\"samples\":[]}";
+
+                if (jsonString.equals(emptyJson)) {
+                    Thread.sleep(1000);
+                    if (attempt < maxAttempts - 1) {
+                        continue;   // attempt again
+                    } else {
+                        throw new Exception("Profiler came back with no data; please try again");
+                    }
+                } else if (jsonString.startsWith("{\"nodes\"") || jsonString.startsWith("{\"head\"")) {
+                    return jsonString;
+                } else {
+                    throw new Exception(noEventHandler);
+                }
             }
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -311,6 +329,9 @@ public class RunCodeProfilerAction extends AnAction {
         } finally {
             EntityUtils.consume(entity);
         }
+
+        // fallback return
+        return jsonString;
     }
 
     /**

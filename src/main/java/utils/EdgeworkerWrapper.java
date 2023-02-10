@@ -47,6 +47,8 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 public class EdgeworkerWrapper implements Disposable {
 
+    private String MIN_SUPPORTED_CLI_VER = "1.7.0";
+
     private ToolWindowManager toolWindowManager;
     private ToolWindow toolWindow;
     private Project project;
@@ -645,7 +647,12 @@ public class EdgeworkerWrapper implements Disposable {
         // do the attempt once per process init using the static variable above
         if (!updateAttempted) {
             try {
-                executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "update", "edgeworkers"));
+                String version = executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "edgeworkers", "--version")).trim();
+
+                // if less than where we want to be
+                if (version.compareTo(MIN_SUPPORTED_CLI_VER) < 0) {
+                    executeCommandAndGetOutput(getCLICommandLineByParams("akamai", "update", "edgeworkers"));
+                }
             } catch (Exception exception) {
                 // the above command failing is non critical so we won't do anything on failure
                 // just catch the error to prevent it from causing problems for extension use
