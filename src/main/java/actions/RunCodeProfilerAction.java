@@ -391,6 +391,7 @@ public class RunCodeProfilerAction extends AnAction {
      * @param event             event which triggered the action
      * @param profilingMode     String specifying whether to profile CPU or memory usage.
      *                          Must be one of {@link Constants#CPU_PROFILING} or {@link Constants#MEM_PROFILING}
+     * @param forceColdStart    Turn on forcing cold start for profiling
      * @param uri               uri to EdgeWorker
      * @param httpMethod        what Http method to use
      * @param eventHandler      event handler to profile
@@ -400,7 +401,7 @@ public class RunCodeProfilerAction extends AnAction {
      * @param edgeIpOverride    IP address that can be used to override the IP lookup for the EdgeWorkers staging server.
      *                          Will automatically determine IP address if null.
      */
-    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, String profilingMode, URI uri, String httpMethod, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers, @Nullable InetAddress edgeIpOverride) {
+    private void profileEdgeWorker(EdgeworkerWrapper edgeworkerWrapper, AnActionEvent event, String profilingMode, boolean forceColdStart, URI uri, String httpMethod, String eventHandler, String filePath, String fileName, ArrayList<String[]> headers, @Nullable InetAddress edgeIpOverride) {
         codeProfiler.setIsLoading(true);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
             try {
@@ -449,6 +450,10 @@ public class RunCodeProfilerAction extends AnAction {
                 headers.add(new String[]{"x-ew-code-profile-" + eventHandler.toLowerCase(), "on"});
                 if (profilingMode.equals(Constants.MEM_PROFILING)) {
                     headers.add(new String[]{Constants.EW_MEM_PROFILING_HEADER, "on"});
+                }
+
+                if (forceColdStart) {
+                    headers.add(new String[]{Constants.EW_COLD_START_HEADER, "on"});
                 }
 
                 // Add Host header if not already set by the user
@@ -518,6 +523,7 @@ public class RunCodeProfilerAction extends AnAction {
         }
         EdgeworkerWrapper edgeworkerWrapper = new EdgeworkerWrapper();
         String profilingMode = codeProfiler.getProfilingMode();
+        boolean forceColdStart = codeProfiler.getForceColdStart();
         String edgeWorkerURL = codeProfiler.getEdgeWorkerURL();
         String httpMethod = codeProfiler.getHttpMethod();
         String eventHandler = codeProfiler.getSelectedEventHandler();
@@ -544,7 +550,7 @@ public class RunCodeProfilerAction extends AnAction {
                 filePath = filePath + File.separator;
             }
 
-            profileEdgeWorker(edgeworkerWrapper, e, profilingMode, uri, httpMethod, eventHandler, filePath, fileName, headers, edgeIpOverride);
+            profileEdgeWorker(edgeworkerWrapper, e, profilingMode, forceColdStart, uri, httpMethod, eventHandler, filePath, fileName, headers, edgeIpOverride);
         } catch (URISyntaxException ex) {
             // this should never really happen because the UI will validate the URL for us
             EdgeWorkerNotification.notifyError(e.getProject(), "Error: EdgeWorker URL is an invalid URL");

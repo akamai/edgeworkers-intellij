@@ -32,6 +32,7 @@ public class CodeProfilerToolWindow {
     private final SimpleToolWindowPanel panel;
     private JBRadioButton cpuButton;
     private JBRadioButton memoryButton;
+    private JCheckBox coldStartButton;
     private JBHintTextField edgeWorkerURLValue;
     private ComboBox<String> eventHandlerDropdown;
     private ComboBox<String> methodDropdown;
@@ -64,6 +65,9 @@ public class CodeProfilerToolWindow {
 
     public String getProfilingMode() {
         return cpuButton.isSelected() ? Constants.CPU_PROFILING : Constants.MEM_PROFILING;
+    }
+    public boolean getForceColdStart() {
+        return coldStartButton.isSelected();
     }
 
     public String getSelectedEventHandler() {
@@ -335,6 +339,11 @@ public class CodeProfilerToolWindow {
         ButtonGroup radioGroup = new ButtonGroup();
         radioGroup.add(cpuButton);
         radioGroup.add(memoryButton);
+
+        // Cold Start
+        coldStartButton = new JCheckBox("Force Cold-Start");
+        modeButtons.add(coldStartButton);
+
 
         // Error Labels
         edgeWorkerURLValueErrorLabel = new JBLabel("The EdgeWorker URL must be a valid URL");

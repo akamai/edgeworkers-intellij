@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.12.0'
+    id 'org.jetbrains.intellij' version '1.15.0'
 }
 
 group 'com.akamai.edgeworkers'
-version '2.2.0'
+version '2.3.0'
 
 repositories {
     mavenCentral()
@@ -18,14 +18,14 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version = '2022.1'
+    version = '2023.1.3'
     type = "IC"
     updateSinceUntilBuild = false
 }
 
 patchPluginXml {
-    changeNotes = 'Added memory profiling support & more profiling options'
-    sinceBuild = '221'
+    changeNotes = 'Added support for cold start profiling'
+    sinceBuild = '231'
 }
 
 test {
@@ -43,11 +43,11 @@ publishPlugin {
 }
 
 runIde {
-    jbrVersion = "11_0_15b2043.56" // JBR for 2022.1
-    // See https://github.com/JetBrains/JetBrainsRuntime#releases-based-on-jdk-11
+    jbrVersion = '17.0.7-b1000.2' // JBR for 2023.2
+    // See https://github.com/JetBrains/JetBrainsRuntime#releases-based-on-jdk-17
 }
 
 verifyPluginConfiguration {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
 }

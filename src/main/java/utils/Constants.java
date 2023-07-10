@@ -7,6 +7,7 @@ public final class Constants {
     public static final String EW_DEFAULT_SAMPLING_SIZE = "5";
     public static final String EW_SAMPLING_HEADER = "x-ew-code-profile-cpu-sampling-interval";
     public static final String EW_MEM_PROFILING_HEADER = "x-ew-code-profile-memory";
+    public static final String EW_COLD_START_HEADER = "x-ew-code-profile-during-cold-start";
     public static final String EW_USER_AGENT = "EdgeWorkers IntelliJ Plugin";
     public static final String CONVERTED_FILE_NAME = "convertedProfile";
     public static final int SPEEDSCOPE_NUMBER_OF_FILES = 16;

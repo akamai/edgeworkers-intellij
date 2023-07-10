@@ -6,17 +6,20 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.jcef.JBCefApp;
 import org.jetbrains.annotations.NotNull;
 
 public class CodeProfilerToolWindowFactory implements ToolWindowFactory {
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+        ContentManager manager = toolWindow.getContentManager();
+
         CodeProfilerToolWindow codeProfilerToolWindow = new CodeProfilerToolWindow();
-        ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+        ContentFactory contentFactory = manager.getFactory();
         try {
             Content content = contentFactory.createContent(codeProfilerToolWindow.getContent(), "", false);
-            toolWindow.getContentManager().addContent(content);
+            manager.addContent(content);
             if (!JBCefApp.isSupported()) {
                 Messages.showWarningDialog(
                         "JCEF is not supported in this environment. Profiling results will not be displayed within the IDE. Please " +

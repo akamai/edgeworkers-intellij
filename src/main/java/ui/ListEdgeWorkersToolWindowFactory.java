@@ -5,6 +5,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
 public class ListEdgeWorkersToolWindowFactory implements ToolWindowFactory {
@@ -21,11 +22,13 @@ public class ListEdgeWorkersToolWindowFactory implements ToolWindowFactory {
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow){
+        ContentManager manager = toolWindow.getContentManager();
+
         ListEdgeWorkersToolWindow listEdgeWorkersToolWindow = new ListEdgeWorkersToolWindow();
-        ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+        ContentFactory contentFactory = manager.getFactory();
         try {
             Content content = contentFactory.createContent(listEdgeWorkersToolWindow.getContent(), "", false);
-            toolWindow.getContentManager().addContent(content);
+            manager.addContent(content);
         }catch (Exception  e){
             e.printStackTrace();
         }
