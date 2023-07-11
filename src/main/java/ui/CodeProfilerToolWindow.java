@@ -310,11 +310,11 @@ public class CodeProfilerToolWindow {
         errorPanel.setLayout(new BoxLayout(errorPanel, BoxLayout.PAGE_AXIS));
 
         // Labels
-        JBLabel stagingLabel = new JBLabel("Profile an EdgeWorker deployed to the Akamai staging network");
-        JBLabel ewNameLabel = new JBLabel("EdgeWorker URL:");
-        JBLabel eventHandlerLabel = new JBLabel("Event Handler:");
-        JBLabel samplingSizeLabel = new JBLabel("Sampling Interval (μs):");
-        JBLabel filePathLabel = new JBLabel("File Path:");
+        JBLabel stagingLabel = new JBLabel("Profile EdgeWorkers code active on the Akamai staging network.");
+        JBLabel ewNameLabel = new JBLabel("EdgeWorkers URL");
+        JBLabel eventHandlerLabel = new JBLabel("Event handler");
+        JBLabel samplingSizeLabel = new JBLabel("Sampling interval (μs)");
+        JBLabel filePathLabel = new JBLabel("File path");
         JBLabel fileNameLabel = new JBLabel("File Name:");
         JBLabel edgeIpOverrideLabel = new JBLabel("Edge IP Override:");
         JBLabel headersLabel = new JBLabel("Request Headers:");
@@ -330,8 +330,8 @@ public class CodeProfilerToolWindow {
         defaultBorder = edgeWorkerURLValue.getBorder();
 
         // Radio Group
-        cpuButton = new JBRadioButton("CPU Profiling");
-        memoryButton = new JBRadioButton("Memory Profiling");
+        cpuButton = new JBRadioButton("CPU Profile");
+        memoryButton = new JBRadioButton("Memory Profile");
         cpuButton.setSelected(true);
         JPanel modeButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         modeButtons.add(cpuButton);
@@ -341,7 +341,8 @@ public class CodeProfilerToolWindow {
         radioGroup.add(memoryButton);
 
         // Cold Start
-        coldStartButton = new JCheckBox("Force Cold-Start");
+        coldStartButton = new JCheckBox("Force Cold Start");
+        modeButtons.add(new JSeparator());
         modeButtons.add(coldStartButton);
 
 
