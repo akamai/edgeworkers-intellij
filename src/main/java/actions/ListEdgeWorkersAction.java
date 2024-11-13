@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +102,6 @@ public class ListEdgeWorkersAction extends AnAction {
                         rootNode.add(node);
                     }
 
-                    addTreeSpeedSearch(tree);
                     addColoredTreeCellRenderer(tree);
                     addTreeWillExpandListener(tree, edgeworkerWrapper, e);
 
@@ -126,10 +124,6 @@ public class ListEdgeWorkersAction extends AnAction {
                 }
             }
         }, "EdgeWorkers List", false, e.getProject());
-    }
-
-    private void addTreeSpeedSearch(Tree tree){
-        TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(tree);
     }
 
     private void addColoredTreeCellRenderer(Tree tree){
@@ -291,6 +285,11 @@ public class ListEdgeWorkersAction extends AnAction {
                 }
             }
         }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 
     public SimpleToolWindowPanel getPanel() {

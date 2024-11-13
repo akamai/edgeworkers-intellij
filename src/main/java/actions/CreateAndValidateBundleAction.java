@@ -1,8 +1,6 @@
 package actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,4 +66,10 @@ public class CreateAndValidateBundleAction extends AnAction {
     public CreateAndValidateBundleUI getCreateAndValidateBundleUI(){
         return new CreateAndValidateBundleUI();
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+    }
+
 }

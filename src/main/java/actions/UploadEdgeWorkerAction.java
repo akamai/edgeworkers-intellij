@@ -150,4 +150,10 @@ public class UploadEdgeWorkerAction extends AnAction {
     public void showErrorDialog(String message, String title){
         Messages.showErrorDialog(message, title);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+    }
+
 }

@@ -1,7 +1,6 @@
 package actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -557,6 +556,11 @@ public class RunCodeProfilerAction extends AnAction {
         } catch (UnknownHostException ex) {
             EdgeWorkerNotification.notifyError(e.getProject(), "Error: Edge IP override is not a valid IP address");
         }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 
     static class HeaderCache {

@@ -1,8 +1,6 @@
 package actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +16,11 @@ public class SandboxUpdateEdgeWorkerAction extends AnAction {
     public void update(@NotNull AnActionEvent event) {
         PsiFile psiFile =  event.getData(CommonDataKeys.PSI_FILE);
         event.getPresentation().setEnabledAndVisible(null != event.getProject() && null != psiFile && psiFile.getName().endsWith(".tgz"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 
     public SandboxUpdateEdgeWorkerAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {

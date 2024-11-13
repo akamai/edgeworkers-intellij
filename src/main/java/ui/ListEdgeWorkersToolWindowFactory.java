@@ -11,11 +11,6 @@ import org.jetbrains.annotations.NotNull;
 public class ListEdgeWorkersToolWindowFactory implements ToolWindowFactory {
 
     @Override
-    public boolean isApplicable(@NotNull Project project) {
-        return ToolWindowFactory.super.isApplicable(project);
-    }
-
-    @Override
     public boolean shouldBeAvailable(@NotNull Project project) {
         return ToolWindowFactory.super.shouldBeAvailable(project);
     }

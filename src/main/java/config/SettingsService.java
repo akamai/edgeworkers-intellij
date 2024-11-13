@@ -1,6 +1,7 @@
 package config;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,8 @@ public class SettingsService implements PersistentStateComponent<EdgeWorkersConf
     private EdgeWorkersConfig config = new EdgeWorkersConfig();
 
     public static SettingsService getInstance() {
-        return ServiceManager.getService(SettingsService.class);
+        return ApplicationManager.getApplication()
+                .getService(SettingsService.class);
     }
 
     @Override

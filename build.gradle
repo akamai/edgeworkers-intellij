@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.akamai.edgeworkers'
-version '2.3.0'
+version '2.4.0'
 
 repositories {
     mavenCentral()
@@ -45,6 +45,7 @@ publishPlugin {
 runIde {
     jbrVersion = '17.0.7-b1000.2' // JBR for 2023.2
     // See https://github.com/JetBrains/JetBrainsRuntime#releases-based-on-jdk-17
+    autoReloadPlugins = true
 }
 
 verifyPluginConfiguration {

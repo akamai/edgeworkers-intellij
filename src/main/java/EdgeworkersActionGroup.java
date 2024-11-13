@@ -1,8 +1,6 @@
 import actions.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.ResourceBundle;
@@ -19,5 +17,10 @@ public class EdgeworkersActionGroup extends ActionGroup {
                 new ActivateEdgeWorkerAction(resourceBundle.getString("action.activateEdgeWorker.title"), resourceBundle.getString("action.activateEdgeWorker.desc"), AllIcons.Actions.Install),
                 new RegisterEdgeWorkerAction(resourceBundle.getString("action.registerEdgeWorker.title"), resourceBundle.getString("action.registerEdgeWorker.desc"), AllIcons.Actions.RefactoringBulb),
         };
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 }
